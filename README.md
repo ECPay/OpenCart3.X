@@ -4,9 +4,9 @@
 <img src="https://img.shields.io/github/release/ECPay/OpenCart3.0.svg" alt="Last Release">
 </p>
 
-提供合作特店以及個人會員使用開放原始碼商店系統時，無須自行處理複雜的檢核，直接透過安裝設定外掛套件，便可以較快速的方式介接綠界系統。
-支援OpenCart 一頁式結帳模組
-支援Line 及FB網頁購物結帳
+#提供合作特店以及個人會員使用開放原始碼商店系統時，無須自行處理複雜的檢核，直接透過安裝設定外掛套件，便可以較快速的方式介接綠界系統。
+#支援OpenCart 一頁式結帳模組
+#支援Line 及FB網頁購物結帳
 
 
 目錄
