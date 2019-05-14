@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+    <code>ecpaypayment</code>
+    <name>ECPay Payment</name>
+    <version>3.0.190410</version>
+    <author>ECPay</author>
+    <link>https://www.ecpay.com.tw/</link>
+   <file path="admin/view/template/sale/order_info.twig">
+        <operation>
+            <search><![CDATA[
+            url: 'index.php?route=sale/order/createinvoiceno&user_token={{ user_token }}&order_id={{ order_id }}',
+            ]]></search>
+            <add position="replace"><![CDATA[
+            url: 'index.php?route=extension/payment/ecpayinvoice/createinvoiceno&user_token={{ user_token }}&order_id={{ order_id }}',
+            ]]></add>
+        </operation>
+    </file>
+
+    <file path="admin/controller/extension/payment/ecpaylogistic.php">
+        <operation>
+            <search><![CDATA[
+            $files = glob(DIR_APPLICATION . 'controller/extension/payment/*.php');
+            ]]></search>
+            <add position="after"><![CDATA[
+
+            if ($files) {
+                foreach($files as $key => $file)
+                {
+                    if(strpos($file,'extension/payment/ecpaylogistic.php'))
+                    {
+                        unset($files[$key]);    
+                    }
+                }
+            }
+
+            ]]></add>
+        </operation>
+    </file>
+
+</modification>

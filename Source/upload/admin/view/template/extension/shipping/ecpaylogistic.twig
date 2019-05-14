@@ -1,0 +1,350 @@
+{{ header}}
+{{ column_left}}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="submit" form="form-popular" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li>
+            <a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+	<div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+	  <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-ecpaylogistic" class="form-horizontal">
+		<div class="row">
+            <div class="col-sm-2">
+              <ul class="nav nav-pills nav-stacked">
+			    <!-- 一般設定 //-->
+                <li class="active"><a href="#tab-general" data-toggle="tab">{{ text_general }}</a></li>
+				<!-- 統一超商取貨 //-->
+                <li><a href="#tab-unimart" data-toggle="tab">{{ text_unimart }}</a></li>
+				<!-- 統一超商取貨付款 //-->
+                <li><a href="#tab-unimart-collection" data-toggle="tab">{{ text_unimart_collection }}</a></li>
+				<!-- 全家超商取貨 //-->
+                <li><a href="#tab-fami" data-toggle="tab">{{ text_fami }}</a></li>
+				<!-- 全家超商取貨付款 //-->
+                <li><a href="#tab-fami-collection" data-toggle="tab">{{ text_fami_collection }}</a></li>
+				<!-- 萊爾富超商取貨 //-->
+                <li><a href="#tab-hilife" data-toggle="tab">{{ text_hilife }}</a></li>
+				<!-- 萊爾富超商取貨付款 //-->
+                <li><a href="#tab-hilife-collection" data-toggle="tab">{{ text_hilife_collection }}</a></li>
+              </ul>
+            </div>
+			
+			<div class="col-sm-10">
+			  <div class="tab-content">
+                <!-- 一般設定 //-->
+			    <div class="tab-pane active" id="tab-general">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_mid }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_mid" value="{{ shipping_ecpaylogistic_mid }}" placeholder="{{ entry_mid }}" id="input-name" class="form-control" />
+					  {% if error_mid %}
+					  <div class="text-danger">{{ error_mid }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_hashkey }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_hashkey" value="{{ shipping_ecpaylogistic_hashkey }}" placeholder="{{ entry_hashkey }}" id="input-name" class="form-control" />
+					  {% if error_hashkey %}
+					  <div class="text-danger">{{ error_hashkey }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_hashiv }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_hashiv" value="{{ shipping_ecpaylogistic_hashiv }}" placeholder="{{ entry_hashiv }}" id="input-name" class="form-control" />
+					  {% if error_hashiv %}
+					  <div class="text-danger">{{ error_hashiv }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-type">{{ entry_type }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_type" id="input-ecpaylogistic-type" class="form-control">
+					  {% for ecpayl_type in shipping_ecpaylogistic_types %}
+					  	{% if ecpayl_type.value == shipping_ecpaylogistic_type %}
+					  		<option value="{{ ecpayl_type.value }}" selected="selected">{{ ecpayl_type.text }}</option>
+					  	{% else %}
+							<option value="{{ ecpayl_type.value }}">{{ ecpayl_type.text }}</option>
+					  	{% endif %}
+					  {% endfor %}
+					  </select>
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_sender_name }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_sender_name" value="{{ shipping_ecpaylogistic_sender_name }}" placeholder="{{ entry_sender_name }}" id="input-name" class="form-control" />
+					  {% if error_sender_name %}
+					  <div class="text-danger">{{ error_sender_name }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_sender_cellphone }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_sender_cellphone" value="{{ shipping_ecpaylogistic_sender_cellphone }}" placeholder="{{ text_sender_cellphone }}" id="input-name" class="form-control" />
+					  {% if error_sender_cellphone %}
+					  <div class="text-danger">{{ error_sender_cellphone }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_FreeShippingAmount }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_free_shipping_amount" value="{{ shipping_ecpaylogistic_free_shipping_amount }}" placeholder="{{ entry_FreeShippingAmount }}" id="input-name" class="form-control" />
+					  {% if error_FreeShippingAmount %}
+					  <div class="text-danger">{{ error_FreeShippingAmount }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_MinAmount }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_min_amount" value="{{ shipping_ecpaylogistic_min_amount }}" placeholder="{{ entry_MinAmount }}" id="input-name" class="form-control" />
+					  {% if error_MinAmount %}
+					  <div class="text-danger">{{ error_MinAmount }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_MaxAmount }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_max_amount" value="{{ shipping_ecpaylogistic_max_amount }}" placeholder="{{ entry_MaxAmount }}" id="input-name" class="form-control" />
+					  {% if error_MaxAmount %}
+					  <div class="text-danger">{{ error_MaxAmount }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="shipping_ecpaylogistic_order_status">{{ entry_order_status }}</label>
+					<div class="col-sm-10">
+						<select name="shipping_ecpaylogistic_order_status" class="form-control">
+						{% for order_status in order_statuses %}
+							{% if order_status.order_status_id == shipping_ecpaylogistic_order_status %} 
+								<option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+							{% else %}
+								<option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+							{% endif %}
+						{% endfor %}
+						</select>
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-geo-zone">{{ entry_geo_zone }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_geo_zone_id" id="input-geo-zone" class="form-control">
+						<option value="0">{{ text_all_zones }}</option>
+						{% for geo_zone in geo_zones %}
+							{% if geo_zone.geo_zone_id == shipping_ecpaylogistic_geo_zone_id %} 
+								<option value="{{ geo_zone.geo_zone_id }}" selected="selected">{{ geo_zone.name }}</option>
+							{% else %}
+								<option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-status">{{ entry_status }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_status" id="input-ecpaylogistic-status" class="form-control">
+					  	{% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+							{% if ecpayl_status.value == shipping_ecpaylogistic_status %}
+								<option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+							{% else %}
+								<option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>
+			    </div>
+				<!-- 統一超商取貨 //-->
+				<div class="tab-pane" id="tab-unimart">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_UNIMART_fee }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_unimart_fee" value="{{ shipping_ecpaylogistic_unimart_fee }}" placeholder="{{ entry_UNIMART_fee }}" id="input-name" class="form-control" />
+					  {% if error_UNIMART_fee %}
+					  <div class="text-danger">{{ error_UNIMART_fee }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-unimart-status">{{ entry_status }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_unimart_status" id="input-ecpaylogistic-unimart-status" class="form-control">
+						{% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+							{% if ecpayl_status.value == shipping_ecpaylogistic_unimart_status %}
+								<option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+							{% else %}
+								<option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>
+				</div>
+				<!-- 統一超商取貨付款 //-->
+				<div class="tab-pane" id="tab-unimart-collection">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_UNIMART_Collection_fee }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_unimart_collection_fee" value="{{ shipping_ecpaylogistic_unimart_collection_fee }}" placeholder="{{ entry_UNIMART_Collection_fee }}" id="input-name" class="form-control" />
+					  {% if error_UNIMART_Collection_fee %}
+					  <div class="text-danger">{{ error_UNIMART_Collection_fee }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-unimart-collection-status">{{ entry_status }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_unimart_collection_status" id="input-ecpaylogistic-unimart-collection-status" class="form-control">
+					  	{% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+					  		{% if ecpayl_status.value == shipping_ecpaylogistic_unimart_collection_status %}
+								<option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+							{% else %}
+								<option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>				  
+				</div>
+				<!-- 全家超商取貨 //-->
+				<div class="tab-pane" id="tab-fami">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_FAMI_fee }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_fami_fee" value="{{ shipping_ecpaylogistic_fami_fee }}" placeholder="{{ entry_FAMI_fee }}" id="input-name" class="form-control" />
+					  {% if error_FAMI_fee %}
+					  <div class="text-danger">{{ error_FAMI_fee }}</div>
+					  {% endif %}
+					</div>
+				  </div>	
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-fami-status">{{ entry_status }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_fami_status" id="input-ecpaylogistic-fami-status" class="form-control">
+					  	{% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+							{% if ecpayl_status.value == shipping_ecpaylogistic_fami_status %}
+								<option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+							{% else %}
+								<option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>				  
+				</div>
+				<!-- 全家超商取貨付款 //-->
+				<div class="tab-pane" id="tab-fami-collection">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_FAMI_Collection_fee }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_fami_collection_fee" value="{{ shipping_ecpaylogistic_fami_collection_fee }}" placeholder="{{ entry_FAMI_Collection_fee }}" id="input-name" class="form-control" />
+					  {% if error_FAMI_Collection_fee %}
+					  <div class="text-danger">{{ error_FAMI_Collection_fee }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-fami-collection-status">{{ entry_status }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_fami_collection_status" id="ecpaylogistic-fami-collection-status" class="form-control">
+					  	{% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+							{% if ecpayl_status.value == shipping_ecpaylogistic_fami_collection_status %}
+								<option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+							{% else %}
+								<option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>
+				</div>
+
+				<!-- 萊爾富超商取貨 //-->
+				<div class="tab-pane" id="tab-hilife">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_HILIFE_fee }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_hilife_fee" value="{{ shipping_ecpaylogistic_hilife_fee }}" placeholder="{{ entry_HILIFE_fee }}" id="input-name" class="form-control" />
+					  {% if error_HILIFE_fee %}
+					  <div class="text-danger">{{ error_HILIFE_fee }}</div>
+					  {% endif %}
+					</div>
+				  </div>	
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-hilife-status">{{ entry_status }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_hilife_status" id="input-ecpaylogistic-hilife-status" class="form-control">
+					  	{% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+							{% if ecpayl_status.value == shipping_ecpaylogistic_hilife_status %}
+								<option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+							{% else %}
+								<option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>				  
+				</div>
+				<!-- 萊爾富超商取貨付款 //-->
+				<div class="tab-pane" id="tab-hilife-collection">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_HILIFE_Collection_fee }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_hilife_collection_fee" value="{{ shipping_ecpaylogistic_hilife_collection_fee }}" placeholder="{{ entry_HILIFE_Collection_fee }}" id="input-name" class="form-control" />
+					  {% if error_HILIFE_Collection_fee %}
+					  <div class="text-danger">{{ error_HILIFE_Collection_fee }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-hilife-collection-status">{{ entry_status }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_hilife_collection_status" id="ecpaylogistic-hilife-collection-status" class="form-control">
+						{% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+							{% if ecpayl_status.value == shipping_ecpaylogistic_hilife_collection_status %}
+								<option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+							{% else %}
+								<option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>
+				</div>
+			  </div>
+			</div>
+		</div>
+		 </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ footer }}

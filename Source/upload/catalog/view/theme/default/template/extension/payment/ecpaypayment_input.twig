@@ -1,0 +1,47 @@
+{% if payment_method.code == module_name %}
+<select name="{{ name_prefix }}_choose_payment" id="{{ id_prefix }}-choose-payment" class="form-control">
+    {% for payment_type, payment_desc in ecpaypayment_payment_methods %}
+        <option value="{{ payment_type }}">{{ payment_desc }}</option>
+    {% endfor %}
+</select>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#button-payment-method").click(function() {
+            var ecpayPaymentRadio = $("input:radio[value=\"{{ module_name }}\"]:checked");
+            var postUrlParent = 'index.php?route=extension/payment/{{ module_name }}/';
+            var postUrl = '';
+            var postData = '';
+            if (ecpayPaymentRadio.length > 0) {
+                // save chosen payment
+                var chosenPayment = $("#{{ id_prefix }}-choose-payment").find(":selected").val();
+                postUrl = postUrlParent + 'savePayment';
+                postData = 'cp=' + chosenPayment;
+            } else {
+                // clean ECPay session
+                postUrl = postUrlParent + 'cleanSession';
+            }
+            var response = simpleAjax(postData, postUrl);
+        });
+    });
+
+    // Simple Ajax
+    function simpleAjax(postData, postUrl) {
+        var parsed = false;
+        var async = false;
+        jQuery.ajax({
+            type: 'post',
+            async : async,
+            url: postUrl,
+            data: postData,
+            success: function (response) {
+                parsed = JSON.parse(response);
+            },
+            error: function(errorObject, errorText, errorHTTP) {
+                // console.log('error: ' . errorText);
+            }
+        });
+        return parsed;
+    }
+</script>
+{% endif %}

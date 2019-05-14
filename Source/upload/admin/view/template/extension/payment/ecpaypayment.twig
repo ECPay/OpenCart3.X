@@ -1,0 +1,303 @@
+{{ header }}
+{{ column_left }}
+<div id="content">
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="pull-right">
+                <button type="submit" form="form-popular" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary">
+                    <i class="fa fa-save"></i>
+                </button>
+                </button>
+                <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default">
+                    <i class="fa fa-reply"></i>
+                </a>
+            </div>
+
+            <h1>{{ heading_title }}</h1>
+
+            <ul class="breadcrumb">
+                {% for breadcrumb in breadcrumbs %}
+                <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="container-fluid">
+    {% if error_warning %}
+        <div class="alert alert-danger">
+            <i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+    {% endif %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-pencil"></i> {{ text_edit }}
+                </h3>
+            </div>
+
+            <div class="panel-body">
+                <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-{{ id_prefix }}" class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-status">
+                            {{ entry_status }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select name="{{ name_prefix }}_status" id="input-{{ id_prefix }}-status" class="form-control">
+                        {% for temp_status in module_statuses %}
+                            {% if temp_status.value == status %}
+                                <option value="{{ temp_status.value }}" selected="selected">
+                                    {{ temp_status.text }}
+                                </option>
+                            {% else %}
+                                <option value="{{ temp_status.value }}">
+                                    {{ temp_status.text }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group required">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-merchant-id">
+                            <span data-toggle="tooltip" title="Merchant ID">
+                                {{ entry_merchant_id }}
+                            </span>
+                        </label>
+                        <div class="col-sm-8">
+                            <input type="text" name="{{ name_prefix }}_merchant_id" value="{{ merchant_id }}" placeholder="Merchant ID" id="input-{{ id_prefix }}-merchant-id" class="form-control" />
+                        </div>
+                        <div class="text-danger">
+                            {{ merchant_id_error }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group required">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-hash-key">
+                            <span data-toggle="tooltip" title="Hash Key">
+                                {{ entry_hash_key }}
+                            </span>
+                        </label>
+                        <div class="col-sm-8">
+                            <input type="text" name="{{ name_prefix }}_hash_key" value="{{ hash_key }}" placeholder="Hash Key" id="input-{{ id_prefix }}-hash-key" class="form-control" />
+                        </div>
+                        <div class="text-danger">
+                            {{ hash_key_error }}
+                        </div>
+                    </div>
+
+                    <div class="form-group required">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-hash-iv">
+                            <span data-toggle="tooltip" title="Hash IV">
+                                {{ entry_hash_iv }}
+                            </span>
+                        </label>
+                        <div class="col-sm-8">
+                            <input type="text" name="{{ name_prefix }}_hash_iv" value="{{ hash_iv }}" placeholder="Hash IV" id="input-{{ id_prefix }}-hash-iv" class="form-control" />
+                        </div>
+                        <div class="text-danger">
+                            {{ hash_iv_error }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-methods">
+                            {{ entry_payment_methods }}
+                        </label>
+                        <div class="col-sm-8">
+                            {% if payment_methods.Credit is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit]" value="credit" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit]" value="credit" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_credit }}
+                            </label>
+
+                            <br />
+
+                            {% if payment_methods.Credit_3 is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_3]" value="credit_3" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_3]" value="credit_3" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_credit_3 }}
+                            </label>
+
+                            <br />
+
+                            {% if payment_methods.Credit_6 is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_6]" value="credit_6" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_6]" value="credit_6" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_credit_6 }}
+                            </label>
+
+                            <br />
+
+                            {% if payment_methods.Credit_12 is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_12]" value="credit_12" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_12]" value="credit_12" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_credit_12 }}
+                            </label>
+
+                            <br />
+
+                            {% if payment_methods.Credit_18 is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_18]" value="credit_18" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_18]" value="credit_18" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_credit_18 }}
+                            </label>
+
+                            <br />
+
+                            {% if payment_methods.Credit_24 is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_24]" value="credit_24" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[Credit_24]" value="credit_24" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_credit_24 }}
+                            </label>
+
+                            <br />
+
+                            {% if payment_methods.WebATM is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[WebATM]" value="webatm" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[WebATM]" value="webatm" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_webatm }}
+                            </label>
+
+                            <br />
+
+                            {% if payment_methods.ATM is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[ATM]" value="atm" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[ATM]" value="atm" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_atm }}
+                            </label>
+
+                            <br />
+
+                            {% if payment_methods.BARCODE is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[BARCODE]" value="barcode" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[BARCODE]" value="barcode" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_barcode }}
+                            </label>
+
+                            <br />
+
+                            {% if payment_methods.CVS is defined %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[CVS]" value="cvs" checked="checked" />
+                            {% else %}
+                                <input type="checkbox" name="{{ name_prefix }}_payment_methods[CVS]" value="cvs" />
+                            {% endif %}
+                            <label class="control-label" for="input-{{ id_prefix }}-payment-methods">
+                                &nbsp;{{ text_cvs }}
+                            </label>
+
+                            <br />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-create-status">
+                            {{ entry_create_status }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select name="{{ name_prefix }}_create_status" id="input-{{ id_prefix }}-create-status" class="form-control">
+                        {% for temp_status in order_statuses %}
+                            {% if temp_status.order_status_id == create_status %}
+                                <option value="{{ temp_status.order_status_id }}" selected="selected">{{ temp_status.name }}</option>
+                            {% else %}
+                                <option value="{{ temp_status.order_status_id }}">{{ temp_status.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-success-status">
+                            {{ entry_success_status }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select name="{{ name_prefix }}_success_status" id="input-{{ id_prefix }}-success-status" class="form-control">
+                        {% for temp_status in order_statuses %}
+                            {% if temp_status.order_status_id == success_status %}
+                                <option value="{{ temp_status.order_status_id }}" selected="selected">{{ temp_status.name }}</option>
+                            {% else %}
+                                <option value="{{ temp_status.order_status_id }}">{{ temp_status.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-failed-status">
+                            {{ entry_failed_status }}
+                        </label>
+                        <div class="col-sm-8">
+                            <select name="{{ name_prefix }}_failed_status" id="input-{{ id_prefix }}-failed-status" class="form-control">
+                        {% for temp_status in order_statuses %}
+                            {% if temp_status.order_status_id == failed_status %}
+                                <option value="{{ temp_status.order_status_id }}" selected="selected">{{ temp_status.name }}</option>
+                            {% else %}
+                                <option value="{{ temp_status.order_status_id }}">{{ temp_status.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-geo-zone">
+                            {{ entry_geo_zone }}
+                        </label>
+                        <div class="col-sm-8">
+                          <select name="{{ name_prefix }}_geo_zone_id" id="input-{{ id_prefix }}-geo-zone" class="form-control">
+                            <option value="0">{{ text_all_zones }}</option>
+                        {% for temp_zone in geo_zones %}
+                            {% if temp_zone.geo_zone_id == geo_zone_id %}
+                                <option value="{{ temp_zone.geo_zone_id }}" selected="selected">{{ temp_zone.name }}</option>
+                            {% else %}
+                                <option value="{{ temp_zone.geo_zone_id }}">{{ temp_zone.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                          </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="input-{{ id_prefix }}-sort-order">
+                            {{ entry_sort_order }}
+                        </label>
+                        <div class="col-sm-8">
+                            <input type="text" name="{{ name_prefix }}_sort_order" value="{{ sort_order }}" placeholder="{{ entry_sort_order }}" id="input-{{ id_prefix }}-sort-order" class="form-control" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{ footer }}
