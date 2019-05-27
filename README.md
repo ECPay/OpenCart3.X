@@ -6,7 +6,7 @@
 
 * 提供合作特店以及個人會員使用開放原始碼商店系統時，無須自行處理複雜的檢核，直接透過安裝設定外掛套件，便可以較快速的方式介接綠界系統。
 
-* 支援OpenCart 一頁式結帳模組
+* 支援OpenCart 一頁式結帳模組 https://www.opencart.com/index.php?route=marketplace/extension/info&extension_id=15580
 
 * 支援Line 及FB網頁購物結帳
 
