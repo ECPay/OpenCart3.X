@@ -21,7 +21,7 @@ $_['ecpaypayment_text_barcode_comment'] 	= 'Result : (%s)%s, Deadline : %s, BARC
 $_['ecpaypayment_text_failure_comment'] 	= 'Paid Failed, Error : %s';
 $_['ecpaypayment_text_state_error'] 		= 'The order state is error, stop updating state';
 $_['ecpaypayment_text_simulate_paid'] 		= 'Simulate paid, update the note only';
-
+$_['ecpayinvoice_text_title']		        = 'ECPay Invoice';
 // Entry
 $_['ecpaypayment_entry_payment_method'] 	= 'Payment Method:';
 

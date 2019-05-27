@@ -21,7 +21,7 @@ $_['ecpaypayment_text_barcode_comment']        = '取號結果：(%s)%s，付款
 $_['ecpaypayment_text_failure_comment']        = '付款失敗, 錯誤訊息：%s';
 $_['ecpaypayment_text_state_error']            = '訂單狀態錯誤，不更新訂單狀態。';
 $_['ecpaypayment_text_simulate_paid']          = '模擬付款，僅更新備註。';
-
+$_['ecpayinvoice_text_title']		       = '綠界電子發票';
 // Entry
 $_['ecpaypayment_entry_payment_method']        = '付款方式:';
 

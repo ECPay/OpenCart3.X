@@ -2,7 +2,7 @@
     <table class="table table-bordered table-hover">
         <thead>
             <tr>
-                <th colspan="2" class="text-center">{{ text_title }}</th>
+                <th colspan="2" class="text-center">{{ ecpaypayment_text_title }}</th>
             </tr>
         </thead>
         <tbody>
@@ -29,7 +29,7 @@
     <table class="table table-bordered table-hover">
         <thead>
             <tr>
-                <th colspan="2" class="text-center">{{ ecpay_invoce_text_title }}</th>
+                <th colspan="2" class="text-center">{{ ecpayinvoice_text_title }}</th>
             </tr>
         </thead>
         <tbody>
@@ -68,21 +68,30 @@
 <script type="text/javascript">
     $(document).ready(function() {
         $("#payment-ecpaypayment-choose-payment").change(function() {
-            var ecpayPaymentRadio = $("input:radio[value=\"{{ module_name }}\"]:checked");
             var postUrlParent = 'index.php?route=extension/payment/{{ module_name }}/';
             var postUrl = '';
             var postData = '';
-            if (ecpayPaymentRadio.length > 0) {
-                // save chosen payment
-                var chosenPayment = $("#{{ id_prefix }}-choose-payment").find(":selected").val();
-                postUrl = postUrlParent + 'savePayment';
-                postData = 'cp=' + chosenPayment;
-            } else {
-                // clean ECPay session
-                postUrl = postUrlParent + 'cleanSession';
-            }
+            
+            // save chosen payment
+            var chosenPayment = $("#{{ id_prefix }}-choose-payment").find(":selected").val();
+            postUrl = postUrlParent + 'savePayment';
+            postData = 'cp=' + chosenPayment;
             var response = simpleAjax(postData, postUrl);
         });
+
+
+        // $('input[type=radio][name=payment_method]').change(function() {
+            
+        //     var postUrlParent = 'index.php?route=extension/payment/{{ module_name }}/';
+        //     var postUrl = '';
+        //     var postData = '';
+
+        //     if (this.value != 'ecpaypayment') {
+        //         postUrl = postUrlParent + 'cleanSession';
+        //         var response = simpleAjax(postData, postUrl);
+        //     } 
+        // });
+
     });
 
     // Simple Ajax
