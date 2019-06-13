@@ -170,6 +170,12 @@ class EcpayPaymentHelper extends ModuleHelper
     public function getValidFeedback($data)
     {
         $feedback = $this->getFeedback($data); // feedback
+
+        // Check the SimulatePaid
+        if($feedback['SimulatePaid'] == 1){
+            return $feedback;
+        }
+        
         $info = $this->getTradeInfo($feedback, $data); // Trade info
 
         // Check the amount

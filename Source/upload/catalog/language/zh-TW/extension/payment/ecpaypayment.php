@@ -20,7 +20,7 @@ $_['ecpaypayment_text_cvs_comment']            = '取號結果：(%s)%s，繳費
 $_['ecpaypayment_text_barcode_comment']        = '取號結果：(%s)%s，付款截止日：%s，第1段條碼號碼：%s，第2段條碼號碼：%s，第3段條碼號碼：%s';
 $_['ecpaypayment_text_failure_comment']        = '付款失敗, 錯誤訊息：%s';
 $_['ecpaypayment_text_state_error']            = '訂單狀態錯誤，不更新訂單狀態。';
-$_['ecpaypayment_text_simulate_paid']          = '模擬付款，僅更新備註。';
+$_['ecpaypayment_text_simulate_paid']          = '模擬付款接收成功，請勿出貨。';
 $_['ecpayinvoice_text_title']		       = '綠界電子發票';
 // Entry
 $_['ecpaypayment_entry_payment_method']        = '付款方式:';
