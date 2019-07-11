@@ -228,7 +228,12 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 unset($this->session->data[$name]);
             }
 
-            $this->addInvoice($order_id);
+            // 判斷電子發票模組是否啟用 1.啟用 0.未啟用
+            $ecpayInvoiceStatus = $this->config->get($this->ecpay_invoice_setting_prefix . 'status');
+            if($ecpayInvoiceStatus === 1)
+            {
+                $this->addInvoice($order_id);
+            }
 
             // Checkout
             $helper_data = array(
@@ -236,7 +241,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 'hashKey' => $this->config->get($this->setting_prefix . 'hash_key'),
                 'hashIv' => $this->config->get($this->setting_prefix . 'hash_iv'),
                 'returnUrl' => $this->url->link($this->module_path . '/response', '', true),
-                'clientBackUrl' =>$this->url->link('account/order/info', 'order_id=' . $order_id, true),
+                'clientBackUrl' =>$this->url->link('checkout/success'),
                 'orderId' => $order_id,
                 'total' => $order_total,
                 'itemName' => $this->language->get($this->lang_prefix . 'text_item_name'),

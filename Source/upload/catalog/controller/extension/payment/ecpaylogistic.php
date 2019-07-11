@@ -90,7 +90,7 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 		$this->cart->clear();
 
 		$this->model_checkout_order->addOrderHistory($order_id, $status_id);
-		$this->response->redirect($this->url->link('account/order/info', 'order_id=' . $order_id, true));
+		$this->response->redirect($this->url->link('checkout/success'));
 	}
 
 	// 依照物流過濾付款方式(EVENT)

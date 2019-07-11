@@ -132,8 +132,11 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 		// 判斷是否為 超商取貨付款
 		if($this->session->data['payment_method']['code'] == 'ecpaylogistic')
 		{
-			$this->addInvoice($order_id);
-
+			// 判斷電子發票模組是否啟用 1.啟用 0.未啟用
+			$ecpayInvoiceStatus = $this->config->get($this->ecpay_invoice_setting_prefix . 'status');
+			if($ecpayInvoiceStatus === 1){
+			    $this->addInvoice($order_id);
+			}
 
 			// 轉導回異動訂單狀態
 			$this->response->redirect($this->url->link($this->ecpay_logistic_payment_module_path . '/update_order_status','order_id='. $order_id, $this->url_secure));
