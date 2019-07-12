@@ -2,7 +2,7 @@
 <modification>
     <code>ecpaypayment</code>
     <name>ECPay Payment</name>
-    <version>3.0.190410</version>
+    <version>3.0.190701</version>
     <author>ECPay</author>
     <link>https://www.ecpay.com.tw/</link>
    <file path="admin/view/template/sale/order_info.twig">
