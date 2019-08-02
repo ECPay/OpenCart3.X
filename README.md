@@ -4,13 +4,7 @@
 <img src="https://img.shields.io/github/release/ECPay/OpenCart3.0.svg" alt="Last Release">
 </p>
 
-* 提供合作特店以及個人會員使用開放原始碼商店系統時，無須自行處理複雜的檢核，直接透過安裝設定外掛套件，便可以較快速的方式介接綠界系統。
-
-* 支援OpenCart 一頁式結帳模組 https://www.opencart.com/index.php?route=marketplace/extension/info&extension_id=15580
-
-* 支援Line 及FB網頁購物結帳
-
-* 需使用PHP5.6以上版本才能正常使用
+提供合作特店以及個人會員使用開放原始碼商店系統時，無須自行處理複雜的檢核，直接透過安裝設定外掛套件，便可以較快速的方式介接綠界系統。
 
 
 目錄
@@ -29,8 +23,8 @@
 -----------------
 | OpenCart  | 模組 |
 | :---------: | :----------: |
-|  3.0.2.0 | 3.0.190701 |
-
+|  3.0.2.0 | 3.0.190410 |
+ 
 
 安裝
 -----------------
@@ -113,6 +107,13 @@
 - 綠界超商取貨付款套件安裝完成後，上述參數會帶入測試帳號為預設值，若您尚未取得廠商專屬帳號，請致電綠界科技，請勿使用於正式營運環境。
 - 請注意 Hash Key 與 Hash IV內容不可包含空白。
 - 須使用綠界整合金流、綠界超商取貨付款，其中一種付款方式才能使用此功能
+- 提供一下兩種時區變更方式，解決時間差了八小時的問題
+
+  1. 安裝第三方套件，並從後台設定時區，下載連結如下方。
+https://www.opencart.com/index.php?route=marketplace/extension/info&extension_id=16023&filter_license=0&filter_download_id=29&filter_rating=2
+
+  2. 透過程式參數調整變更時區
+找到/upload/system/config/default.php，將內容$_['date_timezone'] = 'UTC';  變更為 $_['date_timezone']  = 'Asia/Taipei';
 
 技術支援
 -----------------
