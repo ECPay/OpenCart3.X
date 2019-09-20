@@ -230,7 +230,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
 
             // 判斷電子發票模組是否啟用 1.啟用 0.未啟用
             $ecpayInvoiceStatus = $this->config->get($this->ecpay_invoice_setting_prefix . 'status');
-            if($ecpayInvoiceStatus === 1)
+            if($ecpayInvoiceStatus == 1)
             {
                 $this->addInvoice($order_id);
             }
