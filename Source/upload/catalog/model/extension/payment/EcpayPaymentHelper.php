@@ -299,7 +299,7 @@ class EcpayPaymentHelper extends ModuleHelper
                 break;
             case $this->getSdkPaymentMethod('barcode'):
                 if ($this->isSuccess($inputFeedback, 'payment') === true) {
-                    $responseState = $this->getSuccessState($$getSuccessData);
+                    $responseState = $this->getSuccessState($getSuccessData);
                     if ($responseState === false) {
                         throw new Exception($paymentFailed);
                     }
