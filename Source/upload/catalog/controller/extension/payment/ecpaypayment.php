@@ -460,7 +460,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
         $nInvoiceType = isset($this->session->data['invoice_type']) ? $this->session->data['invoice_type'] : '';
 
         // 資料寫入 invoice_info 資料表
-        $this->db->query("INSERT INTO `" . DB_PREFIX . "invoice_info` (`order_id`, `love_code`, `company_write`, `invoice_type`, `createdate`) VALUES ('" . $order_id . "', '" . $sLoveCode . "', '" . $sCompanyWrite . "', '" . $nInvoiceType . "', '" . $nNowTime . "' )" );
+        $this->db->query("INSERT INTO `" . DB_PREFIX . "invoice_info` (`order_id`, `love_code`, `company_write`, `invoice_type`, `createdate`) VALUES ('" . (int)$order_id . "', '" . $this->db->escape($sLoveCode) . "', '" . $this->db->escape($sCompanyWrite) . "', '" . $this->db->escape($nInvoiceType) . "', '" . $nNowTime . "' )" );
 
         // housekeeping
         $this->clearInvoice();

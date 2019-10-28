@@ -83,7 +83,7 @@ class ModelExtensionPaymentEcpaypayment extends Model {
         $result = $this->db->query(sprintf(
             $select_sql,
             $table,
-            $order_id
+            (int)$order_id
         ));
 
         return ($result->num_rows > 0);
@@ -112,8 +112,8 @@ class ModelExtensionPaymentEcpaypayment extends Model {
         return $this->db->query(sprintf(
             $insert_sql,
             $table,
-            $order_id,
-            $card_4,
+            (int)$order_id,
+            $this->db->escape($card_4) ,
             $response_count,
             $now_time
         ));

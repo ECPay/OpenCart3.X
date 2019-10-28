@@ -125,9 +125,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 		$shipping_address_2 = (isset($_POST['CVSAddress'])) ? $shipping_address_2 . ' ' .$_POST['CVSAddress'] : $shipping_address_2 ;
 
 		// 將門市資訊寫回訂單
-		$this->db->query("UPDATE " . DB_PREFIX . "order SET shipping_address_1 = '".$shipping_address_1."', shipping_address_2 = '" . $shipping_address_2 . "' WHERE order_id = ".(int) $order_id);
-
-
+		$this->db->query("UPDATE " . DB_PREFIX . "order SET shipping_address_1 = '".$this->db->escape($shipping_address_1)."', shipping_address_2 = '" . $this->db->escape($shipping_address_2) . "' WHERE order_id = ".(int) $order_id);
 
 		// 判斷是否為 超商取貨付款
 		if($this->session->data['payment_method']['code'] == 'ecpaylogistic')
@@ -172,7 +170,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 			$AL->CheckOutFeedback($this->request->post);
 			$MerchantTradeNo = (($this->request->post['MerchantID']=='2000132') || ($this->request->post['MerchantID']=='2000933')) ? substr($this->request->post['MerchantTradeNo'], 14) : $this->request->post['MerchantTradeNo'];
 			$order_id = (int)$MerchantTradeNo;
-			$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "order` WHERE order_id = '" . $order_id . "'" );
+			$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "order` WHERE order_id = '" . (int)$order_id . "'" );
 			$aOrder_Info_Tmp = $query->rows[0] ;
 			$sMsg = "綠界科技廠商管理後台物流訊息:<br>" . print_r($this->request->post, true);
 			$aSuccessCodes = ['2067', '3022', '300'];
@@ -299,7 +297,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 		$nInvoiceType = isset($this->session->data['invoice_type']) ? $this->session->data['invoice_type'] : '';
 
 		// 資料寫入 invoice_info 資料表
-		$this->db->query("INSERT INTO `" . DB_PREFIX . "invoice_info` (`order_id`, `love_code`, `company_write`, `invoice_type`, `createdate`) VALUES ('" . $order_id . "', '" . $sLoveCode . "', '" . $sCompanyWrite . "', '" . $nInvoiceType . "', '" . $nNowTime . "' )" );
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "invoice_info` (`order_id`, `love_code`, `company_write`, `invoice_type`, `createdate`) VALUES ('" . (int)$order_id . "', '" . $this->db->escape($sLoveCode) . "', '" . $this->db->escape($sCompanyWrite) . "', '" . $this->db->escape($nInvoiceType) . "', '" . $nNowTime . "' )" );
 
 		// housekeeping
 		$this->clearInvoice();
