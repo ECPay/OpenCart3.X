@@ -399,7 +399,7 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						$ecpay_invoice->Send['SalesAmount'] 			= $nSub_Total_Real ;	
 						$ecpay_invoice->Send['InvType'] 			= '07' ;
 						$ecpay_invoice->Send['vat'] 				= '' ;
-						$ecpay_invoice->Send['InvoiceRemark'] 			= 'OC2_ECPayInvoice_1.0.0719' ;
+						$ecpay_invoice->Send['InvoiceRemark'] 			= 'OC2_ECPayInvoice' ;
 						
 						// C.送出與返回
 						$aReturn_Info = $ecpay_invoice->Check_Out();

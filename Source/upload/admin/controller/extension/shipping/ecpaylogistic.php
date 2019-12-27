@@ -670,7 +670,6 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 				'IsCollection' => $al_iscollection,
 				'ServerReplyURL' => $al_srvreply,
 				'ExtraData' => '',
-				'Device' => Device::PC
 			);
 		} catch (Exception $e) {
 			echo $e->getMessage();
