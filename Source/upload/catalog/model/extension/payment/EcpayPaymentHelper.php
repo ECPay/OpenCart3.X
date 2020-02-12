@@ -172,7 +172,7 @@ class EcpayPaymentHelper extends ModuleHelper
         $feedback = $this->getFeedback($data); // feedback
 
         // Check the SimulatePaid
-        if($feedback['SimulatePaid'] == 1){
+        if(isset($feedback['SimulatePaid']) || $feedback['SimulatePaid'] == 1){
             return $feedback;
         }
         

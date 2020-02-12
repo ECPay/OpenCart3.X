@@ -106,7 +106,6 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 				'IsCollection' => $al_iscollection,
 				'ServerReplyURL' => $al_srvreply,
 				'ExtraData' => '',
-				'Device' => Device::PC
 			);
 		} catch (Exception $e) {
 			echo $e->getMessage();
@@ -248,7 +247,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 			$AL->HashKey = $ecpaylogisticSetting[$this->prefix . 'hashkey'];
 			$AL->HashIV = $ecpaylogisticSetting[$this->prefix . 'hashiv'];
 			$AL->CheckOutFeedback($this->request->post);
-			$query = $this->db->query("SELECT * FROM `ecpaylogistic_info` WHERE AllPayLogisticsID =".$this->db->escape($this->request->post['AllPayLogisticsID']));
+			$query = $this->db->query('Select * from '.DB_PREFIX.'ecpaylogistic_response where AllPayLogisticsID='.$this->db->escape($this->request->post['AllPayLogisticsID']));
 			if ($query->num_rows) {
 				$aAL_info = $query->rows[0];
 				$this->db->query("UPDATE " . DB_PREFIX . "order SET order_status_id = 1 WHERE order_id = ".(int)$aAL_info['order_id']);

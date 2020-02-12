@@ -287,7 +287,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		// $this->load->language($this->module_path);
 		$order_id = $this->request->get['order_id'];
 
-		$ecpaylogistic_query = $this->db->query("Select * from ecpaylogistic_info where order_id=". (int) $order_id);
+		$ecpaylogistic_query = $this->db->query('Select * from '.DB_PREFIX.'ecpaylogistic_response where order_id='.(int) $order_id);
 
 		if (!$ecpaylogistic_query->num_rows) {
 
@@ -399,8 +399,13 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 					
 					$Result = $AL->BGCreateShippingOrder();
 
+					// 記錄回傳資訊
+					if(true) {
+						$this->saveResponse($order_id, $Result);
+					}
+
 					if ($Result['ResCode'] == 1) {
-						$this->db->query("INSERT INTO `ecpaylogistic_info` SET `order_id` =" . (int) $order_id .", `AllPayLogisticsID` = '" . $this->db->escape($Result['AllPayLogisticsID']) ."';");
+
 						$sComment = "建立綠界科技物流訂單<br>綠界科技物流訂單編號: " . $Result['AllPayLogisticsID'];
 						if (isset($Result["CVSPaymentNo"]) && !empty($Result["CVSPaymentNo"])) {
 							$sComment .= "<br>寄貨編號: " . $Result["CVSPaymentNo"];
@@ -490,6 +495,9 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		$this->load->model('setting/event');
 		$this->model_setting_event->addEvent('ecpay_logistic_payment_method', 'catalog/model/setting/extension/getExtensions/after', 'extension/payment/ecpaylogistic/chk_payment_method');
 		$this->model_setting_event->addEvent('ecpay_logistic_create_shipping', 'admin/view/sale/order_info/before', 'extension/shipping/ecpaylogistic/chk_create_shipping');
+		
+		// 物流單列印判斷
+		$this->model_setting_event->addEvent('ecpay_logistic_print_shipping', 'admin/view/sale/order_info/before', 'extension/shipping/ecpaylogistic/chk_print_shipping');
 		$this->model_setting_event->addEvent('ecpay_logistic_javascript', 'admin/view/common/header/before', 'extension/shipping/ecpaylogistic/add_javascript');
 
 
@@ -509,12 +517,31 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "hashiv' , `value` = 'h1ONHk4P4yqbl5LK';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "type' , `value` = 'C2C';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "sender_name' , `value` = '綠界科技';");
-		$this->db->query("
-				CREATE TABLE IF NOT EXISTS `ecpaylogistic_info` (
-				  `order_id` INT(11) NOT NULL,
-				  `AllPayLogisticsID` VARCHAR(50) NOT NULL,
-				  KEY `order_id` (`order_id`)
-				) DEFAULT COLLATE=utf8_general_ci;");
+
+		// 記錄物流訂單回傳資訊
+        $this->db->query("
+            CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "ecpaylogistic_response` (
+              `order_id` INT(11) DEFAULT '0' NOT NULL,
+              `MerchantID` varchar(20) DEFAULT '0' NULL,
+              `MerchantTradeNo` varchar(20) DEFAULT '0' NULL,
+              `RtnCode` INT(10) DEFAULT '0' NULL,
+              `RtnMsg` VARCHAR(200) DEFAULT '0' NULL,
+              `AllPayLogisticsID` varchar(20) DEFAULT '0' NULL,
+              `LogisticsType` varchar(20) DEFAULT '0' NULL,
+              `LogisticsSubType` varchar(20) DEFAULT '0' NULL,
+              `GoodsAmount` INT(10) DEFAULT '0' NULL,
+              `UpdateStatusDate` varchar(20) DEFAULT '0' NULL,
+              `ReceiverName` varchar(60) DEFAULT '0' NULL,
+              `ReceiverPhone` varchar(20) DEFAULT '0' NULL,
+              `ReceiverCellPhone` varchar(20) DEFAULT '0' NULL,
+              `ReceiverEmail` varchar(50) DEFAULT '0' NULL,
+              `ReceiverAddress` varchar(200) DEFAULT '0' NULL,
+              `CVSPaymentNo` varchar(15) DEFAULT '0' NULL,
+              `CVSValidationNo` varchar(10) DEFAULT '0' NULL,
+              `BookingNote` varchar(50) DEFAULT '0' NULL,
+              `createdate` INT(10) DEFAULT '0' NULL
+            ) DEFAULT COLLATE=utf8_general_ci;"
+        );
 	}
 	
 	public function uninstall() {
@@ -530,6 +557,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		// delete event
 		$this->model_setting_event->deleteEventByCode('ecpay_logistic_payment_method');
 		$this->model_setting_event->deleteEventByCode('ecpay_logistic_create_shipping');
+		$this->model_setting_event->deleteEventByCode('ecpay_logistic_print_shipping');
 		$this->model_setting_event->deleteEventByCode('ecpay_logistic_javascript');
 
 	}
@@ -538,7 +566,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 	public function chk_create_shipping(&$route, &$data, &$output) {
 
 		// Token
-        	$token = $this->session->data['user_token'];
+		$token = $this->session->data['user_token'];
 
 		$create_shipping_flag = true ;
 
@@ -549,8 +577,9 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 	        	$create_shipping_flag = false ;
 	        }
 
-	        // // 判斷物流狀態
-	        $ecpaylogistic_query = $this->db->query("Select * from ecpaylogistic_info where order_id=". (int) $data['order_id']);
+	        // 判斷物流狀態
+        	$ecpaylogistic_query = $this->db->query('Select * from '.DB_PREFIX.'ecpaylogistic_response where order_id='.(int)$data['order_id']);
+
 	        if ( $ecpaylogistic_query->num_rows ) {
 	        	$create_shipping_flag = false ; // 已經建立過物流訂單
 	        }
@@ -577,6 +606,135 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 				$data['shipping_address'] .= "<br>" . '<input type="button" id="ecpaylogistic_store" class="btn btn-primary btn-xs" value="變更門市"  onClick="ecpay_express_map(\''.$express_map_url.'\')"/>';
 			}
 			$data['shipping_method'] .= "&nbsp;" . '<input type="button" id="ecpaylogistic" class="btn btn-primary btn-xs" value="建立物流訂單" onClick="ecpay_create_shipping(\''.$create_shipping_order_url.'\')"/>';
+		}
+	}
+
+	// 判斷後台是否顯示物流單列印按鈕
+	public function chk_print_shipping(&$route, &$data, &$output) {
+
+		// Token
+		$token = $this->session->data['user_token'];
+
+		$print_logistic_flag = true ;
+		$html = '' ;
+
+        $orderInfo = $this->model_sale_order->getOrder($data['order_id']);
+
+        // 判斷物流方式
+        if ( strpos($orderInfo['shipping_code'], "ecpaylogistic.") === false) {
+        	$print_logistic_flag = false ;
+        }
+
+        // 判斷物流狀態
+        $ecpaylogistic_query = $this->db->query('Select * from '.DB_PREFIX.'ecpaylogistic_response where order_id='.(int)$data['order_id']);
+
+        if ( $ecpaylogistic_query->num_rows === 0 ) {
+        	$print_logistic_flag = false ; // 尚未建立過物流訂單
+        }
+
+        // 顯示
+        if($print_logistic_flag) {
+        	
+        	// 載入物流SDK
+            $sSkdPath =  dirname(dirname(dirname(dirname(dirname(__FILE__))))) . DIRECTORY_SEPARATOR.'catalog'.DIRECTORY_SEPARATOR.'model'.DIRECTORY_SEPARATOR.'extension'.DIRECTORY_SEPARATOR.'shipping'.DIRECTORY_SEPARATOR.'ECPay.Logistics.Integration.php' ;
+
+            include_once($sSkdPath);
+
+
+            $sFieldName = 'code';
+            $sFieldValue = 'shipping_' . $this->module_name;
+            $get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
+
+            $ecpaylogisticSetting=array();
+            foreach($get_ecpaylogistic_setting_query->rows as $value){
+                $ecpaylogisticSetting[$value["key"]]=$value["value"];
+            }
+
+            if($ecpaylogistic_query->row['LogisticsType'] == 'CVS'){
+            	 
+	            switch ($ecpaylogistic_query->row['LogisticsSubType']) {
+	                case 'FAMIC2C':
+	                     try {
+	                        $AL = new EcpayLogistics();
+	                        $AL->HashKey = $ecpaylogisticSetting[$this->prefix . 'hashkey'];
+	                        $AL->HashIV = $ecpaylogisticSetting[$this->prefix . 'hashiv'];
+	                        $AL->Send = array(
+	                            'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
+	                            'AllPayLogisticsID' => $ecpaylogistic_query->row['AllPayLogisticsID'],
+	                            'CVSPaymentNo' => $ecpaylogistic_query->row['CVSPaymentNo'],
+	                            'PlatformID' => ''
+	                        );
+	                        // PrintFamilyC2CBill(Button名稱, Form target)
+	                        $html = $AL->PrintFamilyC2CBill('全家列印小白單(全家超商C2C)');
+	                    } catch(Exception $e) {
+	                        echo $e->getMessage();
+	                    }
+	                break;
+	                
+	                case 'UNIMARTC2C':
+	                    try {
+	                        $AL = new EcpayLogistics();
+	                        $AL->HashKey = $ecpaylogisticSetting[$this->prefix . 'hashkey'];
+	                        $AL->HashIV = $ecpaylogisticSetting[$this->prefix . 'hashiv'];
+	                        $AL->Send = array(
+	                            'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
+	                            'AllPayLogisticsID' => $ecpaylogistic_query->row['AllPayLogisticsID'],
+	                            'CVSPaymentNo' => $ecpaylogistic_query->row['CVSPaymentNo'],
+	                            'CVSValidationNo' => $ecpaylogistic_query->row['CVSValidationNo'],
+	                            'PlatformID' => ''
+	                        );
+	                        // PrintUnimartC2CBill(Button名稱, Form target)
+	                        $html = $AL->PrintUnimartC2CBill('列印繳款單(統一超商C2C)');
+	                       
+	                    } catch(Exception $e) {
+	                        echo $e->getMessage();
+	                    }
+	                break;
+
+	                case 'HILIFEC2C':
+	                    try {
+	                        $AL = new EcpayLogistics();
+	                        $AL->HashKey = $ecpaylogisticSetting[$this->prefix . 'hashkey'];
+	                        $AL->HashIV = $ecpaylogisticSetting[$this->prefix . 'hashiv'];
+	                        $AL->Send = array(
+	                            'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
+	                            'AllPayLogisticsID' => $ecpaylogistic_query->row['AllPayLogisticsID'],
+	                            'CVSPaymentNo' => $ecpaylogistic_query->row['CVSPaymentNo'],
+	                            'PlatformID' => ''
+	                        );
+	                        // PrintHiLifeC2CBill(Button名稱, Form target)
+	                        $html = $AL->PrintHiLifeC2CBill('萊爾富列印小白單(萊爾富超商C2C)');
+	                        
+	                    } catch(Exception $e) {
+	                        echo $e->getMessage();
+	                    }
+	                break;
+
+	                case 'FAMI':
+	                case 'UNIMART':
+	                case 'HILIFE':
+		                try {
+					        $AL = new EcpayLogistics();
+					        $AL->HashKey = $ecpaylogisticSetting[$this->prefix . 'hashkey'];
+	                        $AL->HashIV = $ecpaylogisticSetting[$this->prefix . 'hashiv'];
+					        $AL->Send = array(
+					            'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
+					            'AllPayLogisticsID' => $ecpaylogistic_query->row['AllPayLogisticsID'],
+					            'PlatformID' => ''
+					        );
+					        // PrintTradeDoc(Button名稱, Form target)
+					        $html = $AL->PrintTradeDoc('產生托運單/一段標');
+					    } catch(Exception $e) {
+					        echo $e->getMessage();
+					    }
+
+					break;
+	            }
+	        }
+
+            $html = str_replace('<div style="text-align:center;">', '', $html);
+            $html = str_replace('</div>', '', $html);
+            $data['shipping_method'] .= "&nbsp;" . $html;
 		}
 	}
 
@@ -670,7 +828,6 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 				'IsCollection' => $al_iscollection,
 				'ServerReplyURL' => $al_srvreply,
 				'ExtraData' => '',
-				'Device' => Device::PC
 			);
 		} catch (Exception $e) {
 			echo $e->getMessage();
@@ -704,4 +861,89 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 
 		$this->response->redirect($order_view_url);	
 	}	
+
+	// 儲存物流訂單回覆
+    public function saveResponse($order_id = 0, $feedback = array()) {
+ 
+        if (empty($order_id) === true) {
+            return false;
+        }
+
+        $white_list = array(
+			'MerchantID',
+			'MerchantTradeNo',
+			'RtnCode',
+			'RtnMsg',
+			'AllPayLogisticsID',
+			'LogisticsType',
+			'LogisticsSubType',
+			'GoodsAmount',
+			'UpdateStatusDate',
+			'ReceiverName',
+			'ReceiverPhone',
+			'ReceiverCellPhone',
+			'ReceiverEmail',
+			'ReceiverAddress',
+			'CVSPaymentNo',
+			'CVSValidationNo',
+			'BookingNote',
+        );
+
+        $inputs = $this->only($feedback, $white_list);
+
+        $insert_sql = 'INSERT INTO `%s`';
+        $insert_sql .= ' (`order_id`, `MerchantID`, `MerchantTradeNo`, `RtnCode`, `RtnMsg`, `AllPayLogisticsID`, `LogisticsType`, `LogisticsSubType`, `GoodsAmount`, `UpdateStatusDate`, `ReceiverName`, `ReceiverPhone`, `ReceiverCellPhone`, `ReceiverEmail`, `ReceiverAddress`, `CVSPaymentNo`, `CVSValidationNo`, `BookingNote`, `createdate`)';
+        $insert_sql .= " VALUES (%d, '%s', '%s', %d, '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d)";
+        $table = DB_PREFIX . 'ecpaylogistic_response'; 
+        $now_time  = time() ;
+
+        return $this->db->query(sprintf(
+            $insert_sql,
+            $table,
+            (int)$order_id,
+            $this->db->escape($inputs['MerchantID']),
+            $this->db->escape($inputs['MerchantTradeNo']),
+            $this->db->escape($inputs['RtnCode']),
+            $this->db->escape($inputs['RtnMsg']),
+            $this->db->escape($inputs['AllPayLogisticsID']),
+            $this->db->escape($inputs['LogisticsType']),
+            $this->db->escape($inputs['LogisticsSubType']),
+            $this->db->escape($inputs['GoodsAmount']),
+            $this->db->escape($inputs['UpdateStatusDate']),
+            $this->db->escape($inputs['ReceiverName']),
+            $this->db->escape($inputs['ReceiverPhone']),
+            $this->db->escape($inputs['ReceiverCellPhone']),
+            $this->db->escape($inputs['ReceiverEmail']),
+            $this->db->escape($inputs['ReceiverAddress']),
+            $this->db->escape($inputs['CVSPaymentNo']),
+            $this->db->escape($inputs['CVSValidationNo']),
+            $this->db->escape($inputs['BookingNote']),
+            $now_time )
+    	);
+    }
+
+    /**
+     * Filter the inputs
+     * @param array $source Source data
+     * @param array $whiteList White list
+     * @return array
+     */
+    public function only($source = array(), $whiteList = array())
+    {
+        $variables = array();
+
+        // Return empty array when do not set white list
+        if (empty($whiteList) === true) {
+            return $source;
+        }
+
+        foreach ($whiteList as $name) {
+            if (isset($source[$name]) === true) {
+                $variables[$name] = $source[$name];
+            } else {
+                $variables[$name] = '';
+            }
+        }
+        return $variables;
+    }
 }
