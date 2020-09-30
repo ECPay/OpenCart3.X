@@ -159,6 +159,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
 
             $payment_methods = $this->config->get($this->setting_prefix . 'payment_methods');
 
+
             // Check choose payment
             if (isset($this->session->data[$this->module_name][$this->chosen_payment_session_name]) === false) {
                 throw new Exception($this->language->get($this->setting_prefix . 'error_payment_missing'));
@@ -493,11 +494,12 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
         }
     }
 
-     /*
+    /*
     |--------------------------------------------------------------------------
     | LOGISTIC
     |--------------------------------------------------------------------------
     */
+
 
 }
 ?>

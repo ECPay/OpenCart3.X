@@ -135,19 +135,19 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 		{
 			
 			$sLove_Code 			= '' ;
-			$nDonation			= '2' ;
+			$nDonation			= '0' ;
 			$nPrint				= '0' ;
 			$sCustomerIdentifier		= '' ;
 			
 			if($aInvoice_Info['invoice_type'] == 1)
 			{
-				$nDonation 		= '2' ;					// 不捐贈
+				$nDonation 		= '0' ;					// 不捐贈
 				$nPrint			= '0' ;
 				$sCustomerIdentifier	= '' ;
 			}
 			elseif($aInvoice_Info['invoice_type'] == 2)
 			{
-				$nDonation 		= '2' ;					// 公司發票 不捐贈
+				$nDonation 		= '0' ;					// 公司發票 不捐贈
 				$nPrint			= '1' ;					// 公司發票 強制列印
 				$sCustomerIdentifier	= $aInvoice_Info['company_write'] ;	// 公司統一編號
 			}
@@ -160,7 +160,7 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 			}
 			else
 			{
-				$nDonation 		= '2' ;
+				$nDonation 		= '0' ;
 				$nPrint			= '0' ;
 				$sLove_Code 		= '' ;
 				$sCustomerIdentifier	= '' ;	
@@ -254,12 +254,11 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 				$ecpay_invoice->Send['vat'] 				= '' ;
 				$ecpay_invoice->Send['InvoiceRemark'] 			= 'OC2_ECPayInvoice' ;
 				
-				// C.送出與返回
+        		// C.送出與返回
 				$aReturn_Info = $ecpay_invoice->Check_Out();
-							
-	
-			}catch (Exception $e)
-			{
+				
+			}catch (Exception $e){
+				
 				// 例外錯誤處理。
 				$sMsg = $e->getMessage();
 			}

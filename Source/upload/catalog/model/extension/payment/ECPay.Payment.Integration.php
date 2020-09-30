@@ -1636,7 +1636,7 @@ if(!class_exists('ECPay_CheckMacValue'))
         * 傳入    $sParameters    參數
         * 傳出    $sParameters    回傳取代後變數
         */
-        static function Replace_Symbol($sParameters){
+        static function ReplaceSymbol($sParameters){
             if(!empty($sParameters)){
                 
                 $sParameters = str_replace('%2D', '-', $sParameters);

@@ -379,7 +379,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 						'GoodsName' => $_Goods,
 						'SenderName' => $ecpaylogisticSetting[$this->prefix . 'sender_name'],
 						'SenderCellPhone' => $_SenderCellPhone,
-						'ReceiverName' => $order_info['shipping_lastname'] . $order_info['shipping_firstname'],
+						'ReceiverName' => $order_info['shipping_firstname'] . $order_info['shipping_lastname'],
 						'ReceiverCellPhone' => $order_info['telephone'],
 						'ReceiverEmail' => $order_info['email'],
 						'ServerReplyURL' => $server_reply_url,

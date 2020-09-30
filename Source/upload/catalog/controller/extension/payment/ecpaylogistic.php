@@ -81,7 +81,7 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 	public function update_order_status(){
 		$this->load->model('checkout/order');
 
-		$order_id = $this->request->get['order_id'];
+		$order_id = $this->session->data['order_id'];
 
 		// Update order status
 		$status_id = $this->config->get($this->setting_prefix . 'order_status');

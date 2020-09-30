@@ -278,19 +278,19 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 					
 					
 					$sLove_Code 			= '' ;
-					$nDonation			= '2' ;
+					$nDonation			= '0' ;
 					$nPrint				= '0' ;
 					$sCustomerIdentifier		= '' ;
 					
 					if($aInvoice_Info['invoice_type'] == 1)
 					{
-						$nDonation 		= '2' ;					// 不捐贈
+						$nDonation 		= '0' ;					// 不捐贈
 						$nPrint			= '0' ;
 						$sCustomerIdentifier	= '' ;
 					}
 					elseif($aInvoice_Info['invoice_type'] == 2)
 					{
-						$nDonation 		= '2' ;					// 公司發票 不捐贈
+						$nDonation 		= '0' ;					// 公司發票 不捐贈
 						$nPrint			= '1' ;					// 公司發票 強制列印
 						$sCustomerIdentifier	= $aInvoice_Info['company_write'] ;	// 公司統一編號
 					}
@@ -303,7 +303,7 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 					}
 					else
 					{
-						$nDonation 		= '2' ;
+						$nDonation 		= '0' ;
 						$nPrint			= '0' ;
 						$sLove_Code 		= '' ;
 						$sCustomerIdentifier	= '' ;	
