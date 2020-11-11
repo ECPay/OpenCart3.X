@@ -12,19 +12,19 @@
 * [支援版本](#支援版本)
 * [安裝](#安裝)
 * [設定](#設定)
-	1. [金流](#金流)
-	2. [電子發票](#電子發票)
-	3. [物流](#物流)
+    1. [金流](#金流)
+    2. [電子發票](#電子發票)
+    3. [物流](#物流)
 * [技術支援](#技術支援)
 
 
 
 支援版本
 -----------------
-| OpenCart  | 模組 |
-| :---------: | :----------: |
-|  3.0.2.0 | 3.0.190823 |
- 
+| OpenCart  |
+| :---------: |
+|  3.0.2.0 |
+
 
 安裝
 -----------------
@@ -115,6 +115,14 @@ https://www.opencart.com/index.php?route=marketplace/extension/info&extension_id
   2. 透過程式參數調整變更時區
 找到/upload/system/config/default.php，將內容$_['date_timezone'] = 'UTC';  變更為 $_['date_timezone']  = 'Asia/Taipei';
 
+- 如果您利用Extension Installer進行移除，請留意需額外刪除下方EVENT事件程序。
+```
+    ecpay_logistic_payment_method
+    ecpay_logistic_create_shipping
+    ecpay_logistic_print_shipping
+    ecpay_logistic_javascript
+```
+
 技術支援
 -----------------
-綠界技術服務工程師信箱: techsupport@ecpay.com.tw
+綠界技術客服信箱: techsupport@ecpay.com.tw
