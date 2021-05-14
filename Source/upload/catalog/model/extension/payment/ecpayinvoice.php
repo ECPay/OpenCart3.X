@@ -215,25 +215,39 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 				
 				//
 				
-				// *找出sub-total
-				$nSub_Total = 0 ;
+				// *找出total
+				$total = 0 ;
 				foreach( $aOrder_Total_Tmp as $key2 => $value2)
 				{
-					if($value2['code'] == 'sub_total')
+					if($value2['code'] == 'total')
 					{
-						$nSub_Total = (int) $value2['value'];
+						$total = (int) $value2['value'];
 						break;
 					}	
+				} //
+
+				// 其他項目計算
+				if(true){
+
+					foreach( $aOrder_Total_Tmp as $key2 => $value2)
+					{
+						if($value2['code'] != 'total' && $value2['code'] != 'sub_total')
+						{
+							$nSub_Total_Real = $nSub_Total_Real + (int) $value2['value'] ; // 計算發票總金額
+
+							array_push($ecpay_invoice->Send['Items'], array('ItemName' => $value2['title'], 'ItemCount' => 1, 'ItemWord' => '批', 'ItemPrice' => (int) $value2['value'], 'ItemTaxType' => 1, 'ItemAmount' => (int) $value2['value'], 'ItemRemark' => $value2['title'] )) ;
+						}	
+					}
 				}
 				
 				// 無條件位後加總有差異
-				if($nSub_Total != $nSub_Total_Real )
+				if($total != $nSub_Total_Real )
 				{
-					$sMsg_P2 .= ( empty($sMsg_P2) ? '' : WEB_MESSAGE_NEW_LINE ) . '綠界科技電子發票開立，實際金額 $' . $nSub_Total . '， 無條件進位後 $' . $nSub_Total_Real;
+					$sMsg_P2 .= ( empty($sMsg_P2) ? '' : WEB_MESSAGE_NEW_LINE ) . '綠界科技電子發票開立，實際金額 $' . $total . '， 無條件進位後 $' . $nSub_Total_Real;
 				}
 				
 				$RelateNumber	= $order_id ;
-				// $RelateNumber 	= 'ECPAY'. date('YmdHis') . rand(1000000000,2147483647) ; // 產生測試用自訂訂單編號
+				//$RelateNumber 	= 'ECPAY'. date('YmdHis') . rand(1000000000,2147483647) ; // 產生測試用自訂訂單編號
 				
 				$ecpay_invoice->Send['RelateNumber'] 			= $RelateNumber ;
 				$ecpay_invoice->Send['CustomerID'] 			= '' ;
