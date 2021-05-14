@@ -365,7 +365,7 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						$total = 0 ;
 						foreach( $aOrder_Total_Tmp as $key2 => $value2)
 						{
-							if($value2['title'] == 'Total')
+							if($value2['code'] == 'total')
 							{
 								$total = (int)$value2['value'];
 								break;
