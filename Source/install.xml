@@ -2,20 +2,9 @@
 <modification>
     <code>ecpaypayment</code>
     <name>ECPay Payment</name>
-    <version>3.0.2105120</version>
+    <version>3.0.2105170</version>
     <author>ECPay</author>
     <link>https://www.ecpay.com.tw/</link>
-   <file path="admin/view/template/sale/order_info.twig">
-        <operation>
-            <search><![CDATA[
-            url: 'index.php?route=sale/order/createinvoiceno&user_token={{ user_token }}&order_id={{ order_id }}',
-            ]]></search>
-            <add position="replace"><![CDATA[
-            url: 'index.php?route=extension/payment/ecpayinvoice/createinvoiceno&user_token={{ user_token }}&order_id={{ order_id }}',
-            ]]></add>
-        </operation>
-    </file>
-
     <file path="admin/controller/extension/payment/ecpaylogistic.php">
         <operation>
             <search><![CDATA[

@@ -155,31 +155,25 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 	{
 		$this->load->language('sale/order');
 		
-		$json = array();
+		if (!$this->user->hasPermission('modify', 'sale/order')){
 
-		if (!$this->user->hasPermission('modify', 'sale/order'))
-		{
-			$json['error'] = $this->language->get('error_permission');
-		}
-		elseif (isset($this->request->get['order_id']))
-		{
-			if (isset($this->request->get['order_id']))
-			{
+		} elseif (isset($this->request->get['order_id'])) {
+
+			if (isset($this->request->get['order_id'])) {
+
 				$order_id = $this->request->get['order_id'];
-			}
-			else
-			{
+			} else {
+
 				$order_id = 0;
 			}
 			
 			$this->load->model('sale/order');
 			
-			
 			// 判斷是否啟動ECPAY電子發票開立
 			$nInvoice_Status = $this->config->get($this->prefix . 'status');
 			
-			if($nInvoice_Status == 1)
-			{
+			if($nInvoice_Status == 1) {
+
 				// 1.參數初始化
 				define('WEB_MESSAGE_NEW_LINE',	'|');	// 前端頁面訊息顯示換行標示語法
 				$sMsg				= '' ;
@@ -210,110 +204,98 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 				$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "invoice_info WHERE order_id = '" . (int)$order_id . "'" );
 					
 				// 3.判斷資料正確性
-				if( $query->num_rows == 0 )
-				{
+				if( $query->num_rows == 0 ) {
+
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '開立發票資訊不存在。';
-				}
-				else
-				{
+
+				} else {
 					$aInvoice_Info = $query->rows[0] ;
 				}
 				
 				// *URL判斷是否有值
-				if($sEcpayinvoice_Url_Issue == '')
-				{
+				if($sEcpayinvoice_Url_Issue == '') {
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫發票傳送網址。';
 				}
 				
 				// *MID判斷是否有值
-				if($nEcpayinvoice_Mid == '')
-				{
+				if($nEcpayinvoice_Mid == '') {
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫商店代號(Merchant ID)。';
 				}
 				
 				// *HASHKEY判斷是否有值
-				if($sEcpayinvoice_Hashkey == '')
-				{
+				if($sEcpayinvoice_Hashkey == '') {
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫金鑰(Hash Key)。';
 				}
 				
 				// *HASHIV判斷是否有值
-				if($sEcpayinvoice_Hashiv == '')
-				{
+				if($sEcpayinvoice_Hashiv == '') {
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫向量(Hash IV)。';
 				}
 				
 				// 判斷是否開過發票
-				if($aOrder_Info_Tmp['invoice_no'] != 0)
-				{
+				if($aOrder_Info_Tmp['invoice_no'] != 0) {
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '已存在發票紀錄，請重新整理頁面。';
 				}
 	
 				// 判斷商品是否存在
-				if(count($aOrder_Product_Tmp) < 0)
-				{
+				if(count($aOrder_Product_Tmp) < 0) {
+
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . ' 該訂單編號不存在商品，不允許開立發票。';
-				}
-				else
-				{
+				} else {
+
 					// 判斷商品是否含小數點
 					foreach( $aOrder_Product_Tmp as $key => $value)
 					{
-						if ( !strstr($value['price'], '.00') )
-						{
+						if( !strstr($value['price'], '.00') ) {
 							$sMsg_P2 .= ( empty($sMsg_P2) ? '' : WEB_MESSAGE_NEW_LINE ) . '提醒：商品 ' . $value['name'] . ' 金額存在小數點，將以無條件進位開立發票。';
 						}
 					}
 				}
 
-				if(!$bError)
-				{
-					
-					
+				if(!$bError){
+
 					$sLove_Code 			= '' ;
 					$nDonation			= '0' ;
 					$nPrint				= '0' ;
 					$sCustomerIdentifier		= '' ;
 					
-					if($aInvoice_Info['invoice_type'] == 1)
-					{
+					if($aInvoice_Info['invoice_type'] == 1){
+
 						$nDonation 		= '0' ;					// 不捐贈
 						$nPrint			= '0' ;
 						$sCustomerIdentifier	= '' ;
-					}
-					elseif($aInvoice_Info['invoice_type'] == 2)
-					{
+
+					} elseif($aInvoice_Info['invoice_type'] == 2) {
+
 						$nDonation 		= '0' ;					// 公司發票 不捐贈
 						$nPrint			= '1' ;					// 公司發票 強制列印
 						$sCustomerIdentifier	= $aInvoice_Info['company_write'] ;	// 公司統一編號
-					}
-					elseif($aInvoice_Info['invoice_type'] == 3)
-					{
+
+					} elseif($aInvoice_Info['invoice_type'] == 3) {
+
 						$nDonation 		= '1' ;
 						$nPrint			= '0' ;
 						$sLove_Code 		= $aInvoice_Info['love_code'] ;
 						$sCustomerIdentifier	= '' ;
-					}
-					else
-					{
+
+					} else {
+
 						$nDonation 		= '0' ;
 						$nPrint			= '0' ;
 						$sLove_Code 		= '' ;
 						$sCustomerIdentifier	= '' ;	
-					}
-					
-					
+					}	
 					
 					// 4.送出參數
-					try
-					{
+					try {
+
 						$sFile_Name =  dirname(dirname(dirname(dirname(dirname(__FILE__))))) . DIRECTORY_SEPARATOR.'catalog'.DIRECTORY_SEPARATOR.'model'.DIRECTORY_SEPARATOR.'extension'.DIRECTORY_SEPARATOR.'payment'.DIRECTORY_SEPARATOR.'Ecpay_Invoice.php' ;
 
 						include_once($sFile_Name);
@@ -348,15 +330,15 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						 	$nString_Limit 	= 10 ;
 						 	$nSource_Length = mb_strlen($sProduct_Note);
 						 	
-						 	if ( $nString_Limit < $nSource_Length )
-					                {
-					                        $nString_Limit = $nString_Limit - 3;
+						 	if ( $nString_Limit < $nSource_Length ) {
 
-					                        if ( $nString_Limit > 0 )
-					                        {
-					                                $sProduct_Note = mb_substr($sProduct_Note, 0, $nString_Limit) . '...';
-					                        }
-					                }
+		                        $nString_Limit = $nString_Limit - 3;
+
+		                        if ( $nString_Limit > 0 ) {
+
+		                                $sProduct_Note = mb_substr($sProduct_Note, 0, $nString_Limit) . '...';
+		                        }
+			                }
 						 	
 							array_push($ecpay_invoice->Send['Items'], array('ItemName' => $sProduct_Name, 'ItemCount' => $nQuantity, 'ItemWord' => '批', 'ItemPrice' => $nPrice, 'ItemTaxType' => 1, 'ItemAmount' => $nTotal, 'ItemRemark' => $sProduct_Note )) ;
 						}
@@ -365,8 +347,8 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						$total = 0 ;
 						foreach( $aOrder_Total_Tmp as $key2 => $value2)
 						{
-							if($value2['title'] == 'Total')
-							{
+							if($value2['title'] == 'Total') {
+
 								$total = (int)$value2['value'];
 								break;
 							}	
@@ -377,8 +359,8 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 
 							foreach( $aOrder_Total_Tmp as $key2 => $value2)
 							{
-								if($value2['code'] != 'total' && $value2['code'] != 'sub_total')
-								{
+								if($value2['code'] != 'total' && $value2['code'] != 'sub_total') {
+
 									$nSub_Total_Real = $nSub_Total_Real + (int) $value2['value'] ; // 計算發票總金額
 
 									array_push($ecpay_invoice->Send['Items'], array('ItemName' => $value2['title'], 'ItemCount' => 1, 'ItemWord' => '批', 'ItemPrice' => (int) $value2['value'], 'ItemTaxType' => 1, 'ItemAmount' => (int) $value2['value'], 'ItemRemark' => $value2['title'] )) ;
@@ -387,14 +369,13 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						}
 						
 						// 無條件位後加總有差異
-						if($total != $nSub_Total_Real )
-						{
+						if($total != $nSub_Total_Real ) {
+
 							$sMsg_P2 .= ( empty($sMsg_P2) ? '' : WEB_MESSAGE_NEW_LINE ) . '綠界科技電子發票開立，實際金額 $' . $total . '， 無條件進位後 $' . $nSub_Total_Real;
 						}
 						
 						$RelateNumber	= $order_id ;
 						//$RelateNumber = 'ECPAY'. date('YmdHis') . rand(1000000000,2147483647) ; // 產生測試用自訂訂單編號
-						
 						
 						$ecpay_invoice->Send['RelateNumber'] 			= $RelateNumber ;
 						$ecpay_invoice->Send['CustomerID'] 			= '' ;
@@ -417,38 +398,34 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						
 						// C.送出與返回
 						$aReturn_Info = $ecpay_invoice->Check_Out();
-									
-		
-					}catch (Exception $e)
-					{
+						
+					}catch (Exception $e) {
+
 						// 例外錯誤處理。
 						$sMsg = $e->getMessage();
 					}
 					
 					// 5.有錯誤訊息或回傳狀態RtnCode不等於1 則不寫入DB
-					if( $sMsg != '' || !isset($aReturn_Info['RtnCode']) || $aReturn_Info['RtnCode'] != 1 )
-					{
+					if( $sMsg != '' || !isset($aReturn_Info['RtnCode']) || $aReturn_Info['RtnCode'] != 1 ) {
+
 						$sMsg .= '綠界科技電子發票手動開立訊息' ;
 						$sMsg .= (isset($aReturn_Info)) ? print_r($aReturn_Info, true) : '' ; 
 						
-						$json['error'] 		= $sMsg;
-						$json['invoice_no'] 	= '';
+
 						
 						// A.寫入LOG
 						$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$order_id . "', order_status_id = '" . (int)$aOrder_Info_Tmp['order_status_id'] . "', notify = '0', comment = '" . $this->db->escape($sMsg) . "', date_added = NOW()");
 	
-					}
-					else
-					{
+					} else {
+
 						// 無條件進位 金額有差異，寫入LOG提醒管理員
-						if( $sMsg_P2 != '' )
-						{
+						if( $sMsg_P2 != '' ) {
+
 							$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$order_id . "', order_status_id = '" . (int)$aOrder_Info_Tmp['order_status_id'] . "', notify = '0', comment = '" . $this->db->escape($sMsg_P2) . "', date_added = NOW()");
 						} 
 						
 						// A.更新發票號碼欄位
 						$invoice_no 		= $aReturn_Info['InvoiceNumber'] ;
-						$json['invoice_no'] 	= $invoice_no;
 						
 						// B.整理發票號碼並寫入DB
 						$sInvoice_No_Pre 	= substr($invoice_no ,0 ,2 ) ;
@@ -458,43 +435,28 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						$sReturn_Info		= '綠界科技電子發票手動開立訊息' ;
 						$sReturn_Info		.= print_r($aReturn_Info, true);
 						
-						//$sInvoice_No_Pre = 'TEST' ;
-						//$sInvoice_No	= 0 ;
-						
 						$this->db->query("UPDATE `" . DB_PREFIX . "order` SET invoice_no = '" . $sInvoice_No . "', invoice_prefix = '" . $this->db->escape($sInvoice_No_Pre) . "' WHERE order_id = '" . (int)$order_id . "'");
 						$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$order_id . "', order_status_id = '" . (int)$aOrder_Info_Tmp['order_status_id'] . "', notify = '0', comment = '" . $this->db->escape($sReturn_Info) . "', date_added = NOW()");
+
+						return $invoice_no ;
 					}
-				}
-				else
-				{
-					$json['error'] 	= $sMsg;	
+
+					
+
+				} else {
+
+					$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$order_id . "', order_status_id = '" . (int)$aOrder_Info_Tmp['order_status_id'] . "', notify = '0', comment = '" . $this->db->escape($sMsg) . "', date_added = NOW()");
 				}	
 			}
-			else
-			{
-				
-				$invoice_no = $this->model_sale_order->createInvoiceNo($order_id);
-				
-				if($invoice_no)
-				{
-					$json['invoice_no'] = $invoice_no;
-				}
-				else
-				{
-					$json['error'] = $this->language->get('error_action');
-				}
-			}
-
 		}
-
-		$this->response->addHeader('Content-Type: application/json');
-		$this->response->setOutput(json_encode($json));
-		// echo json_encode($json);
-		// exit;
 	}
 	
 	public function install() 
 	{
+		// EVENT ADD
+		$this->load->model('setting/event');
+		$this->model_setting_event->addEvent('ecpay_invoice_create', 'admin/model/sale/order/createInvoiceNo/before', 'extension/payment/ecpayinvoice/createInvoiceNo');
+
 		$this->db->query("
 			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "invoice_info` (
 			  `order_id` INT(11) NOT NULL,
