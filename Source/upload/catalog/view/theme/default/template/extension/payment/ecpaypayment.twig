@@ -46,10 +46,38 @@
                 <td class="text-right" style="width:25%;"><strong>統一編號</strong></td>
                 <td class="text-left" style="width:75%;"><input type="text" name="company_write" id="company_write" value="" placeholder="統一編號" class="form-control"></td>
             </tr>
-             <tr class="donation_info"  style="display:none;" >
+            <tr class="donation_info"  style="display:none;" >
                 <td class="text-right" style="width:25%;"><strong>愛心碼</strong></td>
                 <td class="text-left" style="width:75%;"><input type="text" name="love_code" id="love_code" value="" placeholder="請輸入愛心碼3-7位數" class="form-control"><a href = "https://www.einvoice.nat.gov.tw/APMEMBERVAN/XcaOrgPreserveCodeQuery/XcaOrgPreserveCodeQuery" target="_blank">愛心碼查詢</a></td>
             </tr>
+
+            <tr class="carrier_type_zone"  style="display:none;" >
+                <td class="text-right" style="width:25%;"><strong>載具類別</strong></td>
+                <td class="text-left" style="width:75%;">
+                    <select name="carrier_type" id="carrier_type" class="form-control">
+                        <option value="">無載具</option>
+                        <option value="2">自然人憑證號碼</option>
+                        <option value="3">手機條碼載具</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr class="carrier_num_2_zone"  style="display:none;" >
+                <td class="text-right" style="width:25%;"><strong>載具編號</strong></td>
+                <td class="text-left" style="width:75%;">
+                    <input type="text" name="carrier_num_2" id="carrier_num_2" value="" placeholder="自然人憑證號碼" class="form-control">
+                </td>
+            </tr>
+            <tr class="carrier_num_3_zone"  style="display:none;" >
+                <td class="text-right" style="width:25%;"><strong>載具編號</strong></td>
+                <td class="text-left" style="width:75%;">
+                    <input type="text" name="carrier_num_3" id="carrier_num_3" value="" placeholder="手機條碼載具" class="form-control">
+                </td>
+            </tr>
+
+
+            
+
         </tbody>
         <tfoot>
         </tfoot>
@@ -116,16 +144,50 @@
 </script>
 
 <script type="text/javascript">
+    
     // 個人發票
     $( "#invoice_type_1" ).on( "click", function() {
         remove_invoice_info();
         $(".invoice_info").slideUp(0);
         $(".donation_info").slideUp(0);
+        $(".carrier_type_zone").slideDown(0);
         
+        $("#carrier_type").val("");
+        $("#carrier_num_2").val("");
+        $("#carrier_num_3").val("");
+
         $("#company_write").val("");
         $("#love_code").val("");
 
-        save_invoice_info();
+    });
+
+    $( "#carrier_type" ).on( "change", function() {
+        
+        carrier_type = $("#carrier_type").val();
+
+        if(carrier_type == 2){
+
+            $(".carrier_num_2_zone").slideDown(0);
+            $(".carrier_num_3_zone").slideUp(0);
+
+            $("#carrier_num_3").val("");
+
+        } else if(carrier_type == 3){
+
+            $(".carrier_num_2_zone").slideUp(0);
+            $(".carrier_num_3_zone").slideDown(0);
+
+            $("#carrier_num_2").val("");
+
+        } else {
+
+            $(".carrier_num_2_zone").slideUp(0);
+            $(".carrier_num_3_zone").slideUp(0);
+
+            $("#carrier_num_2").val("");
+            $("#carrier_num_3").val("");
+        }
+
     });
 
     // 公司發票
@@ -133,8 +195,14 @@
         remove_invoice_info();
         $(".invoice_info").slideDown(0);
         $(".donation_info").slideUp(0);
-        
+        $(".carrier_type_zone").slideUp(0);
+        $(".carrier_num_2_zone").slideUp(0);
+        $(".carrier_num_3_zone").slideUp(0);
+
         $("#love_code").val("");
+        $("#carrier_type").val("");
+        $("#carrier_num_2").val("");
+        $("#carrier_num_3").val("");
     });
 
     // 捐贈
@@ -142,35 +210,54 @@
         remove_invoice_info();
         $(".invoice_info").slideUp(0);
         $(".donation_info").slideDown(0);
+        $(".carrier_type_zone").slideUp(0);
+        $(".carrier_num_2_zone").slideUp(0);
+        $(".carrier_num_3_zone").slideUp(0);
 
         $("#company_write").val("");
+        $("#carrier_type").val("");
+        $("#carrier_num_2").val("");
+        $("#carrier_num_3").val("");
     });
 
-    // 記錄發票資訊
-    $( "#company_write, #love_code" ).on( "change", function () {
-        var result = validate_invoice_info();
-        if (result === "") {
-            save_invoice_info();
-        }
-    });
-
+    //記錄發票資訊
     function save_invoice_info() {
-        //記錄發票資訊
+        
         var invoice_type = $('input:radio[name="invoice_type"]:checked').val();
+
+        var carrier_type    = $("#carrier_type").val()
+        var carrier_num_2   = $("#carrier_num_2").val()
+        var carrier_num_3   = $("#carrier_num_3").val()
         var company_write   = $("#company_write").val()
         var love_code       = $("#love_code").val()
+
+        if(carrier_type == 2){
+            carrier_num = carrier_num_2 
+        } else if(carrier_type == 3){
+            carrier_num = carrier_num_3
+        } else {
+            carrier_num = "" 
+        }
 
         var postUrl = ''
         var postUrlParent = 'index.php?route=extension/payment/{{ module_name }}/';
         postUrl = postUrlParent + 'saveInvoice';
 
-        var send = {company_write:company_write, love_code:love_code,invoice_type:invoice_type,invoice_status:'1'};
+        var send = {
+            company_write:company_write,
+            love_code:love_code,
+            invoice_type:invoice_type,
+            invoice_status:'1',
+            carrier_type:carrier_type,
+            carrier_num:carrier_num
+        };
 
         $.ajax({
             type: 'POST',
             url: postUrl,
             data: send,
             dataType: "json",
+            async:false,
             success: function (sMsg){
                 console.log(sMsg);
             },
@@ -213,6 +300,43 @@
         }
         else
         {
+            // 個人載具
+            if (invoice_type == 1)
+            {
+                var carrier_type = $('#carrier_type').val();
+                if (carrier_type == 2)
+                {
+                    carrier_num_2 = $("#carrier_num_2").val();
+                    if (carrier_num_2 === '')
+                    {
+                        return "請填寫自然人憑證號碼";
+                    }
+
+                    var result = carrier_num_2.match(/^[a-zA-Z]{2}\d{14}$/);
+                    if(result == null)
+                    {
+                        return "自然人憑證號碼格式錯誤";
+                    }
+
+                } else if(carrier_type == 3){
+
+                    carrier_num_3 = $("#carrier_num_3").val();
+                    if (carrier_num_3 === '')
+                    {
+                        return "請填寫手機條碼載具";
+                    }
+
+                    var result = carrier_num_3.match(/^\/{1}[0-9A-Z+-.]{7}$/);
+                    if(result == null)
+                    {
+                        return "手機條碼載具格式錯誤";
+                    }     
+                }
+
+                console.log(invoice_type)
+            }
+
+
             // 統一編號檢查
             if (invoice_type == 2)
             {
@@ -268,6 +392,8 @@
                 if (result !== "") {
                     alert(result);
                     return false;
+                }else {
+                    save_invoice_info()
                 }
 
             {% endif %}

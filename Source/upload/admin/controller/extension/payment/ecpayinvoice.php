@@ -155,15 +155,20 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 	{
 		$this->load->language('sale/order');
 		
-		if (!$this->user->hasPermission('modify', 'sale/order')){
+		$json = array();
 
-		} elseif (isset($this->request->get['order_id'])) {
-
-			if (isset($this->request->get['order_id'])) {
-
+		if (!$this->user->hasPermission('modify', 'sale/order'))
+		{
+			$json['error'] = $this->language->get('error_permission');
+		}
+		elseif (isset($this->request->get['order_id']))
+		{
+			if (isset($this->request->get['order_id']))
+			{
 				$order_id = $this->request->get['order_id'];
-			} else {
-
+			}
+			else
+			{
 				$order_id = 0;
 			}
 			
@@ -172,8 +177,8 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 			// 判斷是否啟動ECPAY電子發票開立
 			$nInvoice_Status = $this->config->get($this->prefix . 'status');
 			
-			if($nInvoice_Status == 1) {
-
+			if($nInvoice_Status == 1)
+			{
 				// 1.參數初始化
 				define('WEB_MESSAGE_NEW_LINE',	'|');	// 前端頁面訊息顯示換行標示語法
 				$sMsg				= '' ;
@@ -204,92 +209,106 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 				$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "invoice_info WHERE order_id = '" . (int)$order_id . "'" );
 					
 				// 3.判斷資料正確性
-				if( $query->num_rows == 0 ) {
-
+				if( $query->num_rows == 0 )
+				{
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '開立發票資訊不存在。';
-
-				} else {
+				}
+				else
+				{
 					$aInvoice_Info = $query->rows[0] ;
 				}
 				
 				// *URL判斷是否有值
-				if($sEcpayinvoice_Url_Issue == '') {
+				if($sEcpayinvoice_Url_Issue == '')
+				{
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫發票傳送網址。';
 				}
 				
 				// *MID判斷是否有值
-				if($nEcpayinvoice_Mid == '') {
+				if($nEcpayinvoice_Mid == '')
+				{
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫商店代號(Merchant ID)。';
 				}
 				
 				// *HASHKEY判斷是否有值
-				if($sEcpayinvoice_Hashkey == '') {
+				if($sEcpayinvoice_Hashkey == '')
+				{
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫金鑰(Hash Key)。';
 				}
 				
 				// *HASHIV判斷是否有值
-				if($sEcpayinvoice_Hashiv == '') {
+				if($sEcpayinvoice_Hashiv == '')
+				{
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫向量(Hash IV)。';
 				}
 				
 				// 判斷是否開過發票
-				if($aOrder_Info_Tmp['invoice_no'] != 0) {
+				if($aOrder_Info_Tmp['invoice_no'] != 0)
+				{
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '已存在發票紀錄，請重新整理頁面。';
 				}
 	
 				// 判斷商品是否存在
-				if(count($aOrder_Product_Tmp) < 0) {
-
+				if(count($aOrder_Product_Tmp) < 0)
+				{
 					$bError = true ;
 					$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . ' 該訂單編號不存在商品，不允許開立發票。';
-				} else {
-
+				}
+				else
+				{
 					// 判斷商品是否含小數點
 					foreach( $aOrder_Product_Tmp as $key => $value)
 					{
-						if( !strstr($value['price'], '.00') ) {
+						if ( !strstr($value['price'], '.00') )
+						{
 							$sMsg_P2 .= ( empty($sMsg_P2) ? '' : WEB_MESSAGE_NEW_LINE ) . '提醒：商品 ' . $value['name'] . ' 金額存在小數點，將以無條件進位開立發票。';
 						}
 					}
 				}
 
-				if(!$bError){
+				if(!$bError) {
 
-					$sLove_Code 			= '' ;
-					$nDonation			= '0' ;
-					$nPrint				= '0' ;
+					$sLove_Code 				= '' ;
+					$nDonation					= '0' ;
+					$nPrint						= '0' ;
 					$sCustomerIdentifier		= '' ;
 					
+					$carrierType 				= '';
+					$carrierNum 				= '';
+
 					if($aInvoice_Info['invoice_type'] == 1){
 
-						$nDonation 		= '0' ;					// 不捐贈
-						$nPrint			= '0' ;
+						$nDonation 				= '0' ;					// 不捐贈
+						$nPrint					= '0' ;
 						$sCustomerIdentifier	= '' ;
+
+						$carrierType 			= $aInvoice_Info['carrier_type'] ;
+						$carrierNum 			= $aInvoice_Info['carrier_num'] ;
 
 					} elseif($aInvoice_Info['invoice_type'] == 2) {
 
-						$nDonation 		= '0' ;					// 公司發票 不捐贈
-						$nPrint			= '1' ;					// 公司發票 強制列印
+						$nDonation 				= '0' ;					// 公司發票 不捐贈
+						$nPrint					= '1' ;					// 公司發票 強制列印
 						$sCustomerIdentifier	= $aInvoice_Info['company_write'] ;	// 公司統一編號
 
 					} elseif($aInvoice_Info['invoice_type'] == 3) {
 
-						$nDonation 		= '1' ;
-						$nPrint			= '0' ;
-						$sLove_Code 		= $aInvoice_Info['love_code'] ;
+						$nDonation 				= '1' ;
+						$nPrint					= '0' ;
+						$sLove_Code 			= $aInvoice_Info['love_code'] ; 
 						$sCustomerIdentifier	= '' ;
 
 					} else {
 
-						$nDonation 		= '0' ;
-						$nPrint			= '0' ;
-						$sLove_Code 		= '' ;
+						$nDonation 				= '0' ;
+						$nPrint					= '0' ;
+						$sLove_Code 			= '' ;
 						$sCustomerIdentifier	= '' ;	
 					}	
 					
@@ -375,25 +394,25 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						}
 						
 						$RelateNumber	= $order_id ;
-						//$RelateNumber = 'ECPAY'. date('YmdHis') . rand(1000000000,2147483647) ; // 產生測試用自訂訂單編號
+						// $RelateNumber = 'ECPAY'. date('YmdHis') . rand(1000000000,2147483647) ; // 產生測試用自訂訂單編號
 						
 						$ecpay_invoice->Send['RelateNumber'] 			= $RelateNumber ;
-						$ecpay_invoice->Send['CustomerID'] 			= '' ;
+						$ecpay_invoice->Send['CustomerID'] 				= '' ;
 						$ecpay_invoice->Send['CustomerIdentifier'] 		= $sCustomerIdentifier ;
 						$ecpay_invoice->Send['CustomerName'] 			= $aOrder_Info_Tmp['firstname'] ;
 						$ecpay_invoice->Send['CustomerAddr'] 			= $aOrder_Info_Tmp['payment_country'] . $aOrder_Info_Tmp['payment_postcode'] . $aOrder_Info_Tmp['payment_city'] . $aOrder_Info_Tmp['payment_address_1'] . $aOrder_Info_Tmp['payment_address_2'];
 						$ecpay_invoice->Send['CustomerPhone'] 			= $aOrder_Info_Tmp['telephone'] ;
 						$ecpay_invoice->Send['CustomerEmail'] 			= $aOrder_Info_Tmp['email'] ;
 						$ecpay_invoice->Send['ClearanceMark'] 			= '' ;
-						$ecpay_invoice->Send['Print'] 				= $nPrint ;
-						$ecpay_invoice->Send['Donation'] 			= $nDonation ;
-						$ecpay_invoice->Send['LoveCode'] 			= $sLove_Code ;
-						$ecpay_invoice->Send['CarruerType'] 			= '' ;
-						$ecpay_invoice->Send['CarruerNum'] 			= '' ;
-						$ecpay_invoice->Send['TaxType'] 			= 1 ;
+						$ecpay_invoice->Send['Print'] 					= $nPrint ;
+						$ecpay_invoice->Send['Donation'] 				= $nDonation ;
+						$ecpay_invoice->Send['LoveCode'] 				= $sLove_Code ;
+						$ecpay_invoice->Send['CarruerType'] 			= $carrierType ;
+						$ecpay_invoice->Send['CarruerNum'] 				= $carrierNum ;
+						$ecpay_invoice->Send['TaxType'] 				= 1 ;
 						$ecpay_invoice->Send['SalesAmount'] 			= $nSub_Total_Real ;	
-						$ecpay_invoice->Send['InvType'] 			= '07' ;
-						$ecpay_invoice->Send['vat'] 				= '' ;
+						$ecpay_invoice->Send['InvType'] 				= '07' ;
+						$ecpay_invoice->Send['vat'] 					= '' ;
 						$ecpay_invoice->Send['InvoiceRemark'] 			= 'OC2_ECPayInvoice' ;
 						
 						// C.送出與返回
@@ -411,7 +430,8 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						$sMsg .= '綠界科技電子發票手動開立訊息' ;
 						$sMsg .= (isset($aReturn_Info)) ? print_r($aReturn_Info, true) : '' ; 
 						
-
+						$json['error'] 		= $sMsg;
+						$json['invoice_no'] 	= '';
 						
 						// A.寫入LOG
 						$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$order_id . "', order_status_id = '" . (int)$aOrder_Info_Tmp['order_status_id'] . "', notify = '0', comment = '" . $this->db->escape($sMsg) . "', date_added = NOW()");
@@ -426,6 +446,7 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						
 						// A.更新發票號碼欄位
 						$invoice_no 		= $aReturn_Info['InvoiceNumber'] ;
+						$json['invoice_no'] 	= $invoice_no;
 						
 						// B.整理發票號碼並寫入DB
 						$sInvoice_No_Pre 	= substr($invoice_no ,0 ,2 ) ;
@@ -437,11 +458,9 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						
 						$this->db->query("UPDATE `" . DB_PREFIX . "order` SET invoice_no = '" . $sInvoice_No . "', invoice_prefix = '" . $this->db->escape($sInvoice_No_Pre) . "' WHERE order_id = '" . (int)$order_id . "'");
 						$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$order_id . "', order_status_id = '" . (int)$aOrder_Info_Tmp['order_status_id'] . "', notify = '0', comment = '" . $this->db->escape($sReturn_Info) . "', date_added = NOW()");
-
-						return $invoice_no ;
 					}
 
-					
+					return $invoice_no ;
 
 				} else {
 
@@ -463,6 +482,8 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 			  `love_code` VARCHAR(50) NOT NULL,
 			  `company_write` VARCHAR(10) NOT NULL,
 			  `invoice_type` TINYINT(2) NOT NULL,
+			  `carrier_type` TINYINT(2) NOT NULL,
+			  `carrier_num` VARCHAR(20) NOT NULL,
 			  `createdate` INT(10)  NOT NULL
 			) DEFAULT COLLATE=utf8_general_ci;");
 			

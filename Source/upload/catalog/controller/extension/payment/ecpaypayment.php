@@ -412,7 +412,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
     // Ajax API to save chosen payment(SESSION)
     public function saveInvoice() {
         $function_name = __FUNCTION__;
-        $white_list = array('invoice_type','company_write','love_code','invoice_status');
+        $white_list = array('invoice_type','company_write','love_code','invoice_status', 'carrier_type', 'carrier_num');
         $inputs = $this->helper->only($_POST, $white_list);
 
         // Check the received variables
@@ -426,6 +426,8 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
         $this->session->data['love_code'] = $inputs['love_code'];
         $this->session->data['invoice_status'] = $inputs['invoice_status'];
 
+        $this->session->data['carrier_type'] = $inputs['carrier_type'];
+        $this->session->data['carrier_num'] = $inputs['carrier_num'];
 
         $this->helper->echoJson(array('response' => 'ok', 'input'=> $inputs));
     }
@@ -447,7 +449,8 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
         $this->session->data['company_write'] = '';
         $this->session->data['love_code'] = '';
         $this->session->data['invoice_status'] = 0;
-
+        $this->session->data['carrier_type'] = '';
+        $this->session->data['carrier_num'] = '';
 
         $this->helper->echoJson(array('response' => 'ok', 'input'=> $inputs));
     }
@@ -460,8 +463,11 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
         $sCompanyWrite = isset($this->session->data['company_write']) ? $this->session->data['company_write'] : '';
         $nInvoiceType = isset($this->session->data['invoice_type']) ? $this->session->data['invoice_type'] : '';
 
+        $carrierType = isset($this->session->data['carrier_type']) ? $this->session->data['carrier_type'] : '';
+        $carrierNum = isset($this->session->data['carrier_num']) ? $this->session->data['carrier_num'] : '';
+
         // 資料寫入 invoice_info 資料表
-        $this->db->query("INSERT INTO `" . DB_PREFIX . "invoice_info` (`order_id`, `love_code`, `company_write`, `invoice_type`, `createdate`) VALUES ('" . (int)$order_id . "', '" . $this->db->escape($sLoveCode) . "', '" . $this->db->escape($sCompanyWrite) . "', '" . $this->db->escape($nInvoiceType) . "', '" . $nNowTime . "' )" );
+        $this->db->query("INSERT INTO `" . DB_PREFIX . "invoice_info` (`order_id`, `love_code`, `company_write`, `invoice_type`, `carrier_type`, `carrier_num`, `createdate`) VALUES ('" . (int)$order_id . "', '" . $this->db->escape($sLoveCode) . "', '" . $this->db->escape($sCompanyWrite) . "', '" . $this->db->escape($nInvoiceType) . "', '" . $this->db->escape($carrierType) . "', '" . $this->db->escape($carrierNum) . "', '" . $nNowTime . "' )" );
 
         // housekeeping
         $this->clearInvoice();

@@ -134,35 +134,41 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 		if(!$bError)
 		{
 			
-			$sLove_Code 			= '' ;
-			$nDonation			= '0' ;
-			$nPrint				= '0' ;
+			$sLove_Code 				= '' ;
+			$nDonation					= '0' ;
+			$nPrint						= '0' ;
 			$sCustomerIdentifier		= '' ;
+
+			$carrierType 				= '';
+			$carrierNum 				= '';
 			
-			if($aInvoice_Info['invoice_type'] == 1)
-			{
-				$nDonation 		= '0' ;					// 不捐贈
-				$nPrint			= '0' ;
+			if($aInvoice_Info['invoice_type'] == 1) {
+				
+				$nDonation 				= '0' ;					// 不捐贈
+				$nPrint					= '0' ;
 				$sCustomerIdentifier	= '' ;
-			}
-			elseif($aInvoice_Info['invoice_type'] == 2)
-			{
-				$nDonation 		= '0' ;					// 公司發票 不捐贈
-				$nPrint			= '1' ;					// 公司發票 強制列印
+
+				$carrierType 			= $aInvoice_Info['carrier_type'] ;
+				$carrierNum 			= $aInvoice_Info['carrier_num'] ;
+
+			} elseif($aInvoice_Info['invoice_type'] == 2) {
+				
+				$nDonation 				= '0' ;					// 公司發票 不捐贈
+				$nPrint					= '1' ;					// 公司發票 強制列印
 				$sCustomerIdentifier	= $aInvoice_Info['company_write'] ;	// 公司統一編號
-			}
-			elseif($aInvoice_Info['invoice_type'] == 3)
-			{
-				$nDonation 		= '1' ;
-				$nPrint			= '0' ;
-				$sLove_Code 		= $aInvoice_Info['love_code'] ;
+
+			} elseif($aInvoice_Info['invoice_type'] == 3) {
+
+				$nDonation 				= '1' ;
+				$nPrint					= '0' ;
+				$sLove_Code 			= $aInvoice_Info['love_code'] ;
 				$sCustomerIdentifier	= '' ;
-			}
-			else
-			{
-				$nDonation 		= '0' ;
-				$nPrint			= '0' ;
-				$sLove_Code 		= '' ;
+
+			} else {
+
+				$nDonation 				= '0' ;
+				$nPrint					= '0' ;
+				$sLove_Code 			= '' ;
 				$sCustomerIdentifier	= '' ;	
 			}
 			
@@ -173,11 +179,11 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 				$ecpay_invoice = new EcpayInvoice ;
 				
 				// A.寫入基本介接參數
-				$ecpay_invoice->Invoice_Method 			= 'INVOICE' ;
-				$ecpay_invoice->Invoice_Url 			= $sEcpayinvoice_Url_Issue ;
-				$ecpay_invoice->MerchantID 			= $nEcpayinvoice_Mid ;
-				$ecpay_invoice->HashKey 			= $sEcpayinvoice_Hashkey ;
-				$ecpay_invoice->HashIV 				= $sEcpayinvoice_Hashiv ;
+				$ecpay_invoice->Invoice_Method 	= 'INVOICE' ;
+				$ecpay_invoice->Invoice_Url 	= $sEcpayinvoice_Url_Issue ;
+				$ecpay_invoice->MerchantID 		= $nEcpayinvoice_Mid ;
+				$ecpay_invoice->HashKey 		= $sEcpayinvoice_Hashkey ;
+				$ecpay_invoice->HashIV 			= $sEcpayinvoice_Hashiv ;
 				
 				// B.送出開立發票參數
 				$aItems	= array();
@@ -250,24 +256,24 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 				//$RelateNumber 	= 'ECPAY'. date('YmdHis') . rand(1000000000,2147483647) ; // 產生測試用自訂訂單編號
 				
 				$ecpay_invoice->Send['RelateNumber'] 			= $RelateNumber ;
-				$ecpay_invoice->Send['CustomerID'] 			= '' ;
+				$ecpay_invoice->Send['CustomerID'] 				= '' ;
 				$ecpay_invoice->Send['CustomerIdentifier'] 		= $sCustomerIdentifier ;
 				$ecpay_invoice->Send['CustomerName'] 			= $aOrder_Info_Tmp['firstname'] ;
 				$ecpay_invoice->Send['CustomerAddr'] 			= $aOrder_Info_Tmp['payment_country'] . $aOrder_Info_Tmp['payment_postcode'] . $aOrder_Info_Tmp['payment_city'] . $aOrder_Info_Tmp['payment_address_1'] . $aOrder_Info_Tmp['payment_address_2'];
 				$ecpay_invoice->Send['CustomerPhone'] 			= $aOrder_Info_Tmp['telephone'] ;
 				$ecpay_invoice->Send['CustomerEmail'] 			= $aOrder_Info_Tmp['email'] ;
 				$ecpay_invoice->Send['ClearanceMark'] 			= '' ;
-				$ecpay_invoice->Send['Print'] 				= $nPrint ;
-				$ecpay_invoice->Send['Donation'] 			= $nDonation ;
-				$ecpay_invoice->Send['LoveCode'] 			= $sLove_Code ;
-				$ecpay_invoice->Send['CarruerType'] 			= '' ;
-				$ecpay_invoice->Send['CarruerNum'] 			= '' ;
-				$ecpay_invoice->Send['TaxType'] 			= 1 ;
+				$ecpay_invoice->Send['Print'] 					= $nPrint ;
+				$ecpay_invoice->Send['Donation'] 				= $nDonation ;
+				$ecpay_invoice->Send['LoveCode'] 				= $sLove_Code ;
+				$ecpay_invoice->Send['CarruerType'] 			= $carrierType ;
+				$ecpay_invoice->Send['CarruerNum'] 				= $carrierNum ;
+				$ecpay_invoice->Send['TaxType'] 				= 1 ;
 				$ecpay_invoice->Send['SalesAmount'] 			= $nSub_Total_Real ;	
-				$ecpay_invoice->Send['InvType'] 			= '07' ;
-				$ecpay_invoice->Send['vat'] 				= '' ;
+				$ecpay_invoice->Send['InvType'] 				= '07' ;
+				$ecpay_invoice->Send['vat'] 					= '' ;
 				$ecpay_invoice->Send['InvoiceRemark'] 			= 'OC2_ECPayInvoice' ;
-				
+
         		// C.送出與返回
 				$aReturn_Info = $ecpay_invoice->Check_Out();
 				
