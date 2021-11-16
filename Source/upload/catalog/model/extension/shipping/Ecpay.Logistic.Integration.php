@@ -1754,7 +1754,7 @@ if (!class_exists('EcpayLogistics', false)) {
                 $this->IsInteger($Name, $Value);
                 
                 // 內容檢查
-                $this->IsLegalValue($Name, $ClassName, $Value);
+                $this->IsLegal($Name, $Value);
             }
         }
 

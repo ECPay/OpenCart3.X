@@ -288,7 +288,7 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						$nPrint					= '0' ;
 						$sCustomerIdentifier	= '' ;
 
-						$carrierType 			= $aInvoice_Info['carrier_type'] ;
+						$carrierType 			= (empty($aInvoice_Info['carrier_type'])) ? '' : $aInvoice_Info['carrier_type'] ;
 						$carrierNum 			= $aInvoice_Info['carrier_num'] ;
 
 					} elseif($aInvoice_Info['invoice_type'] == 2) {

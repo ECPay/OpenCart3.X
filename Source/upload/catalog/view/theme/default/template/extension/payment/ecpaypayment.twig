@@ -398,7 +398,18 @@
 
             {% endif %}
 
-            location.href='{{ redirect_url }}';  
+            device = detectmob()
+            location.href='{{ redirect_url }}&device='+device;  
+        }
+    }
+
+    function detectmob() { 
+     
+        if ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+            return 1;
+        }
+        else {
+            return 0;
         }
     }
     

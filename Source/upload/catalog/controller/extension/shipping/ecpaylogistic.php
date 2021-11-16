@@ -100,6 +100,9 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
         $al_srvreply = $this->url->link($this->ecpay_logistic_module_path . '/response_map&sid='.$dataBase64Encode,'',$this->url_secure);
 
         try {
+
+            $device = (isset($_GET['device']) && $_GET['device'] == 1) ? EcpayDevice::MOBILE : EcpayDevice::PC ;
+
             $AL = new ECPayLogistics();
             $AL->Send = array(
                 'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
@@ -110,6 +113,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
                 'IsCollection' => $al_iscollection,
                 'ServerReplyURL' => $al_srvreply,
                 'ExtraData' => '',
+                'Device' => $device,
             );
         } catch (Exception $e) {
             echo $e->getMessage();
