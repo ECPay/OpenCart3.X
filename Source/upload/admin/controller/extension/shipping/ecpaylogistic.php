@@ -740,11 +740,8 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 
 	// 增加javascript
 	public function add_javascript(&$route, &$data, &$output) {
-  				        
-		$this->document->addScript('view/javascript/ecpay/js/jquery.blockUI.js');
-		$this->document->addScript('view/javascript/ecpay/js/ecpaylogistic.js');
-
-		$data['scripts'] = $this->document->getScripts();
+  		$data['scripts'][] = 'view/javascript/ecpay/js/jquery.blockUI.js';
+   		$data['scripts'][] = 'view/javascript/ecpay/js/ecpaylogistic.js';
 	}
 
 	// 電子地圖選擇門市
