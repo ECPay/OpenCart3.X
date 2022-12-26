@@ -107,15 +107,18 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
             // 判斷是否為綠界物流
             $delivery_method = array('ecpaylogistic.unimart_collection','ecpaylogistic.fami_collection','ecpaylogistic.hilife_collection','ecpaylogistic.unimart','ecpaylogistic.fami','ecpaylogistic.hilife');
 
-            if( in_array( $this->session->data['shipping_method']['code'], $delivery_method) ) {
-                
-                // 轉導至門市選擇 
-                $data['redirect_url'] = $this->url->link(
-                    $this->ecpay_logistic_module_path . '/express_map',
-                    '',
-                    $this->url_secure
-                );
-            }
+            if(isset($this->session->data['shipping_method'])){
+
+                if( in_array( $this->session->data['shipping_method']['code'], $delivery_method) ) {
+                    
+                    // 轉導至門市選擇 
+                    $data['redirect_url'] = $this->url->link(
+                        $this->ecpay_logistic_module_path . '/express_map',
+                        '',
+                        $this->url_secure
+                    );
+                }
+            } 
         }
 
         // var_dump($data);

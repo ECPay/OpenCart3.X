@@ -96,7 +96,6 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 	// 依照物流過濾付款方式(EVENT)
 	public function chk_payment_method(&$route, &$data, &$output) {
 
-		
 		if($data[0] == 'payment')
 		{
 		        $delivery_method_collection = array('ecpaylogistic.unimart_collection','ecpaylogistic.fami_collection','ecpaylogistic.hilife_collection');
@@ -133,6 +132,15 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 		                    }
 		                }
 		            }
+		        } else {
+
+		        	// 不需要物流的商品，移除貨到付款選項
+	                foreach($output as $key => $payment ) {
+	                    if( $payment['code'] == 'ecpaylogistic' ) {
+	                    	unset($output[$key]);
+	                    }
+	                }
+
 		        }
 
 		        if (empty($data['payment_methods'])) {
