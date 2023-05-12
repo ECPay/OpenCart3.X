@@ -156,7 +156,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
             } else {
 
                 // 轉導ECPAY付款
-                $this->response->redirect($this->url->link($this->ecpay_payment_module_path . '/redirect', $this->url_secure));
+                $this->response->redirect($this->url->link($this->ecpay_payment_module_path . '/redirect', '', $this->url_secure));
             }   
         }
     }

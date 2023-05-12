@@ -2,7 +2,7 @@
 <modification>
     <code>ecpaypayment</code>
     <name>ECPay Payment</name>
-    <version>3.0.220707</version>
+    <version>3.0.230512</version>
     <author>ECPay</author>
     <link>https://www.ecpay.com.tw/</link>
     <file path="admin/controller/extension/payment/ecpaylogistic.php">
