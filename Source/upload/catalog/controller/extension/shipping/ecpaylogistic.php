@@ -136,7 +136,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
         setcookie($this->config->get('session_name'), $sessionId, ini_get('session.cookie_lifetime'), ini_get('session.cookie_path'), ini_get('session.cookie_domain'));
 
         // 將門市資訊寫回訂單
-        $this->db->query("UPDATE " . DB_PREFIX . "order SET shipping_address_1 = '".$this->db->escape($shipping_address_1)."', shipping_address_2 = '" . $this->db->escape($shipping_address_2) . "' WHERE order_id = ".(int) $order_id);
+        $this->db->query("UPDATE `" . DB_PREFIX . "order` SET shipping_address_1 = '".$this->db->escape($shipping_address_1)."', shipping_address_2 = '" . $this->db->escape($shipping_address_2) . "' WHERE order_id = '".(int) $order_id . "'");
 
         // 取出訂單付款方式
         $order_query = $this->db->query("SELECT payment_code FROM `" . DB_PREFIX . "order` WHERE order_id = '" . (int) $order_id . "'" );
@@ -268,7 +268,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
             $query = $this->db->query('Select * from '.DB_PREFIX.'ecpaylogistic_response where AllPayLogisticsID='.$this->db->escape($this->request->post['AllPayLogisticsID']));
             if ($query->num_rows) {
                 $aAL_info = $query->rows[0];
-                $this->db->query("UPDATE " . DB_PREFIX . "order SET order_status_id = 1 WHERE order_id = ".(int)$aAL_info['order_id']);
+                $this->db->query("UPDATE `" . DB_PREFIX . "order` SET order_status_id = 1 WHERE order_id = ".(int)$aAL_info['order_id']);
                 $sMsg = "綠界科技廠商管理後台更新門市通知:<br>" . print_r($this->request->post, true);
                 $this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$aAL_info['order_id'] . "', order_status_id = '1', notify = '0', comment = '" . $this->db->escape($sMsg) . "', date_added = NOW()");
                 echo '1|OK';

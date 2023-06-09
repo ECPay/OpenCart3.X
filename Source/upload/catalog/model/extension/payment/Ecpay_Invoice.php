@@ -3191,6 +3191,7 @@ if(!class_exists('ECPay_Invoice_CheckMacValue')) {
                 $sParameters = str_replace('%2a', '*', $sParameters);
                 $sParameters = str_replace('%28', '(', $sParameters);
                 $sParameters = str_replace('%29', ')', $sParameters);
+                $sParameters = str_replace('%20', '+', $sParameters);
             }
 
             return $sParameters ;

@@ -287,7 +287,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		// $this->load->language($this->module_path);
 		$order_id = $this->request->get['order_id'];
 
-		$ecpaylogistic_query = $this->db->query('Select * from '.DB_PREFIX.'ecpaylogistic_response where order_id='.(int) $order_id);
+		$ecpaylogistic_query = $this->db->query('Select * from `'.DB_PREFIX.'ecpaylogistic_response` where order_id='.(int) $order_id);
 
 		if (!$ecpaylogistic_query->num_rows) {
 
@@ -401,6 +401,8 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 
 					// 記錄回傳資訊
 					if(true) {
+						// 還原Email加號
+						$Result['ReceiverEmail'] = str_replace(' ', '+', $Result['ReceiverEmail']);
 						$this->saveResponse($order_id, $Result);
 					}
 
@@ -417,7 +419,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 
 						$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$order_id . "', order_status_id = 3, notify = '0', comment = '" . $this->db->escape($sComment) . "', date_added = NOW()");
 						
-						$this->db->query("UPDATE " . DB_PREFIX . "order SET order_status_id = 3 WHERE order_id = ". (int) $order_id);
+						$this->db->query("UPDATE `" . DB_PREFIX . "order` SET order_status_id = 3 WHERE order_id = '". (int) $order_id . "'");
 						
 
 						$ajax_return['code'] = 799;
@@ -846,7 +848,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 
 
 		// 將門市資訊寫回訂單
-		$this->db->query("UPDATE " . DB_PREFIX . "order SET shipping_address_1 = '". $this->db->escape($shipping_address_1) ."', shipping_address_2 = '" . $this->db->escape($shipping_address_2) . "' WHERE order_id = ".(int) $order_id);
+		$this->db->query("UPDATE `" . DB_PREFIX . "order` SET shipping_address_1 = '". $this->db->escape($shipping_address_1) ."', shipping_address_2 = '" . $this->db->escape($shipping_address_2) . "' WHERE order_id = ".(int) $order_id);
 
 
 		// 轉導訂單資訊

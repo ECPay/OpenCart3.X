@@ -252,8 +252,8 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 					$sMsg_P2 .= ( empty($sMsg_P2) ? '' : WEB_MESSAGE_NEW_LINE ) . '綠界科技電子發票開立，實際金額 $' . $total . '， 無條件進位後 $' . $nSub_Total_Real;
 				}
 				
-				$RelateNumber	= $order_id ;
-				//$RelateNumber 	= 'ECPAY'. date('YmdHis') . rand(1000000000,2147483647) ; // 產生測試用自訂訂單編號
+				// 產生測試用自訂訂單編號
+				$RelateNumber	= 'ECPAY' . substr(str_pad($order_id, 8, '0', STR_PAD_LEFT), 0, 8) . 'SN' . substr(hash('sha256', (string) time()), -5) ;
 				
 				$ecpay_invoice->Send['RelateNumber'] 			= $RelateNumber ;
 				$ecpay_invoice->Send['CustomerID'] 				= '' ;
