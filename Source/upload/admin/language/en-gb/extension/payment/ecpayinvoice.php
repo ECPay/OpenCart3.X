@@ -15,11 +15,9 @@ $_['entry_hashkey']     = '金鑰(Hash Key)';
 $_['entry_hashiv']      = '向量(Hash IV)';
 $_['entry_type']        = '類型';
 $_['entry_autoissue']   = '自動開立電子發票';
-$_['entry_url']         = '開立發票網址';
 $_['entry_status']      = '狀態';
 
 // Error
 $_['error_mid']         = '請輸入' . $_['entry_mid'];
 $_['error_hashkey']     = '請輸入' . $_['entry_hashkey'];
 $_['error_hashiv']      = '請輸入' . $_['entry_hashiv'];
-$_['error_url']         = '請輸入' . $_['entry_url'];

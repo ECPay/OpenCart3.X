@@ -6,8 +6,6 @@ function ecpay_create_shipping(url){
         url: url,
         dataType: 'json',
         success: function (sMsg){
-            console.log(sMsg)
-            
             alert(sMsg.msg)
             location.reload();
         },

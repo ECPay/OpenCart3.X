@@ -4,7 +4,6 @@ class ModelExtensionPaymentEcpaypayment extends Model {
     private $lang_prefix = '';
     private $module_path = '';
     private $setting_prefix = '';
-	private $libraryList = array('EcpayPaymentHelper.php');
 	private $helper = null;
     private $extend_table_name = 'order_extend';
 
@@ -16,8 +15,9 @@ class ModelExtensionPaymentEcpaypayment extends Model {
         $this->lang_prefix = $this->module_name .'_';
         $this->setting_prefix = 'payment_' . $this->module_name . '_';
         $this->module_path = 'extension/payment/' . $this->module_name;
-        $this->loadLibrary();
-        $this->helper = $this->getHelper();
+
+        $this->load->library('ecpay_payment_helper');
+        $this->helper = $this->registry->get('ecpay_payment_helper');
     }
 
 	public function getMethod($address, $total) {
@@ -53,22 +53,6 @@ class ModelExtensionPaymentEcpaypayment extends Model {
             );
         }
         return $method_data;
-    }
-	
-    // Load the libraries
-	public function loadLibrary() {
-		foreach ($this->libraryList as $path) {
-			include_once($path);
-		}
-	}
-
-    // Get the helper
-    public function getHelper() {
-        $merchant_id = $this->config->get($this->setting_prefix . 'merchant_id');
-        $helper = new EcpayPaymentHelper();
-        $helper->setMerchantId($merchant_id);
-
-        return $helper;
     }
 
     // Check if AIO responsed
@@ -119,4 +103,25 @@ class ModelExtensionPaymentEcpaypayment extends Model {
         ));
     }
 
+    // 新增綠界訂單額外資訊
+    public function insertEcpayOrderExtend($order_id, $inputs)
+    {
+        if (empty($order_id) === true) {
+            return false;
+        }
+
+        $insert_sql = 'INSERT INTO `%s`';
+        $insert_sql .= ' (`order_id`, `goods_weight`, `createdate`)';
+        $insert_sql .= " VALUES (%d, %.3f, %d)";
+        $table = DB_PREFIX . 'ecpay_order_extend';
+        $now_time  = time() ;
+
+        return $this->db->query(sprintf(
+            $insert_sql,
+            $table,
+            (int)$order_id,
+            $this->db->escape($inputs['goodsWeight']),
+            $now_time )
+    	);
+    }
 }

@@ -1,6 +1,6 @@
 <?php
 class ControllerExtensionPaymentEcpaypayment extends Controller {
-    
+
     private $error = array();
     private $module_name = 'ecpaypayment';
     private $module_code = '';
@@ -34,17 +34,17 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
     public function index() {
         // Load the translation file
         $this->load->language($this->module_path);
-        
+
         // Set the title
         $heading_title = $this->language->get('heading_title');
         $this->document->setTitle($heading_title);
-        
+
         // Load the Setting
         $this->load->model('setting/setting');
 
         // Token
         $token = $this->session->data['user_token'];
-        
+
         // Process the saving setting
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
             // Save the setting
@@ -52,10 +52,10 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 $this->module_code
                 , $this->request->post
             );
-            
+
             // Define the success message
             $this->session->data['success'] = $this->language->get($this->lang_prefix . 'text_success');
-            
+
             // Back to the payment list
             $redirect_url = $this->url->link(
                 $this->extension_route,
@@ -64,7 +64,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
             );
             $this->response->redirect($redirect_url);
         }
-        
+
         // Get the translations
         $data['heading_title'] = $heading_title;
 
@@ -153,14 +153,14 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
             'user_token=' . $token,
             $this->url_secure
         );
-        
+
         // Set the cancel button
         $data['cancel'] = $this->url->link(
             $this->extension_route,
             'user_token=' . $token,
             $this->url_secure
         );
-        
+
         // Get ECPay options
         $options = array(
             'status',
@@ -184,12 +184,12 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
             unset($option_name);
         }
         unset($options);
-        
+
         // Default value
         $default_values = array(
-            'merchant_id' => '2000132',
-            'hash_key' => '5294y06JbISpM5x9',
-            'hash_iv' => 'v77hoKGq4kWxNNIS',
+            'merchant_id' => '3002607',
+            'hash_key' => 'pwFHCqoQZGmho4w6',
+            'hash_iv' => 'EkRm7iFT261dpevs',
             'create_status' => 1,
             'success_status' => 15,
         );
@@ -198,7 +198,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 $data[$name] = $value;
             }
         }
-        
+
         // Set module status
         $data['module_statuses'] = array(
             array(
@@ -210,7 +210,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 'text' => $this->language->get($this->lang_prefix . 'text_disabled')
             )
         );
-        
+
         // Get the order statuses
         $this->load->model('localisation/order_status');
         $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
@@ -218,7 +218,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
         // Get the geo zones
         $this->load->model('localisation/geo_zone');
         $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
-        
+
         // View's setting
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
@@ -236,7 +236,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
         if (!$this->user->hasPermission('modify', $this->module_path)) {
             $this->error['error_warning'] = $this->language->get($this->lang_prefix . 'error_permission');
         }
-        
+
         // Required fields validate
         foreach ($this->validate_fields as $name) {
             $field_name = $this->setting_prefix . $name;
@@ -245,13 +245,13 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
             }
             unset($field_name);
         }
-        
-        return !$this->error; 
+
+        return !$this->error;
     }
 
     // install
     public function install() {
-        
+
         // card_no4 記錄信用卡後四碼提供電子發票開立使用
         // response_count AIO 回應次數
 
@@ -262,6 +262,15 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
               `response_count` TINYINT(1) DEFAULT '0' NOT NULL,
               `createdate` INT(10) DEFAULT '0' NOT NULL
             ) DEFAULT COLLATE=utf8_general_ci;");
+
+		// 記錄訂單額外資訊
+        $this->db->query("
+            CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "ecpay_order_extend` (
+                `order_id` INT(11) DEFAULT '0' NOT NULL,
+                `goods_weight` DECIMAL(15,3) NOT NULL DEFAULT '0.000',
+                `createdate` INT(10) DEFAULT '0' NULL
+            ) DEFAULT COLLATE=utf8_general_ci;"
+        );
     }
 
     // uninstall

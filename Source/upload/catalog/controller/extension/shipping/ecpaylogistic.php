@@ -1,4 +1,8 @@
 <?php
+
+use Ecpay\Sdk\Factories\Factory;
+use Ecpay\Sdk\Response\VerifiedArrayResponse;
+
 class ControllerExtensionShippingecpayLogistic extends Controller {
 
     // payment
@@ -13,9 +17,8 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
     private $ecpay_logistic_model_name = '';
 
     // invoice
-        private $ecpay_invoice_module_name = 'ecpayinvoice';
-        private $ecpay_invoice_setting_prefix = '';
-
+    private $ecpay_invoice_module_name = 'ecpayinvoice';
+    private $ecpay_invoice_setting_prefix = '';
 
     // Constructor
     public function __construct($registry) {
@@ -26,7 +29,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
         // payment
         $this->ecpay_payment_module_path = 'extension/payment/' . $this->ecpay_payment_module_name;
         $this->ecpay_logistic_payment_module_path = 'extension/payment/' . $this->ecpay_logistic_module_name;
-        
+
         // invoice
         $this->ecpay_invoice_setting_prefix = 'payment_' . $this->ecpay_invoice_module_name . '_';
 
@@ -34,9 +37,8 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
         $this->ecpay_logistic_module_path = 'extension/shipping/' . $this->ecpay_logistic_module_name;
         $this->ecpay_logistic_model_name = 'model_extension_shipping_' . $this->ecpay_logistic_module_name;
 
-        $this->load->model($this->ecpay_logistic_module_path);
-        $this->{$this->ecpay_logistic_model_name}->loadLibrary();
-        $this->helper = $this->{$this->ecpay_logistic_model_name}->getHelper();
+        $this->load->library('ecpay_logistic_helper');
+        $this->helper = $this->registry->get('ecpay_logistic_helper');
     }
 
     protected function index() {
@@ -44,41 +46,37 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 
     // 電子地圖選擇門市
     public function express_map() {
-        
         $ecpaylogisticSetting=array();
-
-        // 載入物流SDK
-        $sSkdPath =  dirname(dirname(dirname(dirname(dirname(__FILE__))))) . DIRECTORY_SEPARATOR.'catalog'.DIRECTORY_SEPARATOR.'model'.DIRECTORY_SEPARATOR.'extension'.DIRECTORY_SEPARATOR.'shipping'.DIRECTORY_SEPARATOR.'ECPay.Logistics.Integration.php' ;
-
-        include_once($sSkdPath);
-
 
         $sFieldName = 'code';
         $sFieldValue = 'shipping_' . $this->ecpay_logistic_module_name;
         $get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
-        
+
         foreach( $get_ecpaylogistic_setting_query->rows as $value ) {
             $ecpaylogisticSetting[$value["key"]] = $value["value"];
         }
-        
-        
+
         if ( $ecpaylogisticSetting[$this->prefix . 'type'] == 'C2C' ) {
             $shippingMethod = [
-                'fami' => LogisticsSubType::FAMILY_C2C,
-                'fami_collection' => LogisticsSubType::FAMILY_C2C,
-                'unimart' => LogisticsSubType::UNIMART_C2C,
-                'unimart_collection' => LogisticsSubType::UNIMART_C2C,
-                'hilife' => LogisticsSubType::HILIFE_C2C,
-                'hilife_collection' => LogisticsSubType::HILIFE_C2C
+                'fami' => 'FAMIC2C',
+                'fami_collection' => 'FAMIC2C',
+                'unimart' => 'UNIMARTC2C',
+                'unimart_collection' => 'UNIMARTC2C',
+                'hilife' => 'HILIFEC2C',
+                'hilife_collection' => 'HILIFEC2C',
+                'okmart' => 'OKMARTC2C',
+                'okmart_collection' => 'OKMARTC2C'
             ];
         } else {
             $shippingMethod = [
-                'fami' => LogisticsSubType::FAMILY,
-                'fami_collection' => LogisticsSubType::FAMILY,
-                'unimart' => LogisticsSubType::UNIMART,
-                'unimart_collection' => LogisticsSubType::UNIMART,
-                'hilife' => LogisticsSubType::HILIFE,
-                'hilife_collection' => LogisticsSubType::HILIFE
+                'fami' => 'FAMI',
+                'fami_collection' => 'FAMI',
+                'unimart' => 'UNIMART',
+                'unimart_collection' => 'UNIMART',
+                'hilife' => 'HILIFE',
+                'hilife_collection' => 'HILIFE',
+                'okmart' => 'OKMART',
+                'okmart_collection' => 'OKMART'
             ];
         }
 
@@ -96,36 +94,40 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
         $sessionId = $_COOKIE[$this->config->get('session_name')];
         $dataBase64Encode = $this->sessionEncrypt($sessionId);
 
-        $al_iscollection = IsCollection::NO;
+        $al_iscollection = 'N';
         $al_srvreply = $this->url->link($this->ecpay_logistic_module_path . '/response_map&sid='.$dataBase64Encode,'',$this->url_secure);
 
         try {
+            $factory = new Factory([
+				'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
+				'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+				'hashMethod'    => 'md5',
+			]);
+            $autoSubmitFormService = $factory->create('AutoSubmitFormWithCmvService');
 
-            $device = (isset($_GET['device']) && $_GET['device'] == 1) ? EcpayDevice::MOBILE : EcpayDevice::PC ;
+			$inputMap = array(
+				'MerchantID'       => $ecpaylogisticSetting[$this->prefix . 'mid'],
+				'MerchantTradeNo'  => $this->helper->getMerchantTradeNo($this->session->data['order_id']),
+                'LogisticsType'    => $this->helper->get_logistics_type($al_subtype),
+				'LogisticsSubType' => $al_subtype,
+				'IsCollection'     => $al_iscollection,
+				'ServerReplyURL'   => $al_srvreply,
+				'ExtraData'        => '',
+			);
 
-            $AL = new ECPayLogistics();
-            $AL->Send = array(
-                'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
-                // 'MerchantTradeNo' => 'no' . date('YmdHis'),
-                'MerchantTradeNo' => $this->session->data['order_id'],
+            $api_info = $this->helper->get_ecpay_logistic_api_info('map', $al_subtype, $ecpaylogisticSetting);
+            $form_map = $autoSubmitFormService->generate($inputMap, $api_info['action'], 'ecpay_map');
 
-                'LogisticsSubType' => $al_subtype,
-                'IsCollection' => $al_iscollection,
-                'ServerReplyURL' => $al_srvreply,
-                'ExtraData' => '',
-                'Device' => $device,
-            );
         } catch (Exception $e) {
             echo $e->getMessage();
         }
-        $html = $AL->CvsMap('');
-        echo $html;
+        
+        echo $form_map;
     }
 
     // 電子地圖選擇門市回傳
     public function response_map() {
-        
-        $order_id = $_POST['MerchantTradeNo'] ;
+        $order_id = $this->helper->getOrderIdByMerchantTradeNo(['MerchantTradeNo' => $_POST['MerchantTradeNo']]);
         $shipping_address_1 = (isset($_POST['CVSStoreID'])) ? $_POST['CVSStoreID'] : '' ;
         $shipping_address_2 = (isset($_POST['CVSStoreName'])) ? $_POST['CVSStoreName'] : '' ;
         $shipping_address_2 = (isset($_POST['CVSAddress'])) ? $shipping_address_2 . ' ' .$_POST['CVSAddress'] : $shipping_address_2 ;
@@ -136,7 +138,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
         setcookie($this->config->get('session_name'), $sessionId, ini_get('session.cookie_lifetime'), ini_get('session.cookie_path'), ini_get('session.cookie_domain'));
 
         // 將門市資訊寫回訂單
-        $this->db->query("UPDATE `" . DB_PREFIX . "order` SET shipping_address_1 = '".$this->db->escape($shipping_address_1)."', shipping_address_2 = '" . $this->db->escape($shipping_address_2) . "' WHERE order_id = '".(int) $order_id . "'");
+        $this->db->query("UPDATE " . DB_PREFIX . "order SET shipping_address_1 = '".$this->db->escape($shipping_address_1)."', shipping_address_2 = '" . $this->db->escape($shipping_address_2) . "' WHERE order_id = ".(int) $order_id);
 
         // 取出訂單付款方式
         $order_query = $this->db->query("SELECT payment_code FROM `" . DB_PREFIX . "order` WHERE order_id = '" . (int) $order_id . "'" );
@@ -144,7 +146,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 
             // 判斷是否為 超商取貨付款
             if($order_query->row['payment_code'] == 'ecpaylogistic') {
-                
+
                 // 判斷電子發票模組是否啟用 1.啟用 0.未啟用
                 $ecpayInvoiceStatus = $this->config->get($this->ecpay_invoice_setting_prefix . 'status');
                 if($ecpayInvoiceStatus == 1){
@@ -157,18 +159,12 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 
                 // 轉導ECPAY付款
                 $this->response->redirect($this->url->link($this->ecpay_payment_module_path . '/redirect', '', $this->url_secure));
-            }   
+            }
         }
     }
 
     // 建立物流訂單回傳
     public function response() {
-
-        // 載入物流SDK
-        $sSkdPath =  dirname(dirname(dirname(dirname(dirname(__FILE__))))) . DIRECTORY_SEPARATOR.'catalog'.DIRECTORY_SEPARATOR.'model'.DIRECTORY_SEPARATOR.'extension'.DIRECTORY_SEPARATOR.'shipping'.DIRECTORY_SEPARATOR.'ECPay.Logistics.Integration.php' ;
-
-        include_once($sSkdPath);
-
         $sFieldName = 'code';
         $sFieldValue = 'shipping_' . $this->ecpay_logistic_module_name;
         $get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
@@ -179,13 +175,14 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
         }
 
         try {
+            $factory = new Factory([
+				'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
+				'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+				'hashMethod'    => 'md5',
+			]);
+            $checkoutResponse = $factory->create(VerifiedArrayResponse::class);
 
-            $AL = new ECPayLogistics();
-            $AL->HashKey = $ecpaylogisticSetting[$this->prefix . 'hashkey'];
-            $AL->HashIV = $ecpaylogisticSetting[$this->prefix . 'hashiv'];
-            $AL->CheckOutFeedback($this->request->post);
-            $MerchantTradeNo = (($this->request->post['MerchantID']=='2000132') || ($this->request->post['MerchantID']=='2000933')) ? substr($this->request->post['MerchantTradeNo'], 14) : $this->request->post['MerchantTradeNo'];
-            $order_id = (int)$MerchantTradeNo;
+            $order_id = $this->helper->getOrderIdByMerchantTradeNo(['MerchantTradeNo' => $this->request->post['MerchantTradeNo']]);
             $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "order` WHERE order_id = '" . (int)$order_id . "'" );
             $aOrder_Info_Tmp = $query->rows[0] ;
             $sMsg = "綠界科技廠商管理後台物流訊息:<br>" . print_r($this->request->post, true);
@@ -202,11 +199,12 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
                 $shippingMethod = array(
                     'fami_collection',
                     'unimart_collection',
-                    'hilife_collection'
+                    'hilife_collection',
+                    'okmart_collection'
                 );
 
                 if ( in_array($shippingCode[1], $shippingMethod) && ( $sRtnCode == 2067 || $sRtnCode == 3022 ) ) {
-                    
+
                     // Check E-Invoice model
                     $ecpay_invoice_status = $this->config->get($this->ecpay_invoice_setting_prefix . 'status');
 
@@ -237,7 +235,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
                     }
                 }
             }
-            
+
             $this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . $order_id . "', order_status_id = '" . (int)$aOrder_Info_Tmp['order_status_id'] . "', notify = '0', comment = '" . $this->db->escape($sMsg) . "', date_added = NOW()");
 
             echo '1|OK';
@@ -249,26 +247,23 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 
     // Server端物流回傳網址
     public function logistics_c2c_reply() {
-
-        // 載入物流SDK
-        $sSkdPath =  dirname(dirname(dirname(dirname(dirname(__FILE__))))) . DIRECTORY_SEPARATOR.'catalog'.DIRECTORY_SEPARATOR.'model'.DIRECTORY_SEPARATOR.'extension'.DIRECTORY_SEPARATOR.'shipping'.DIRECTORY_SEPARATOR.'ECPay.Logistics.Integration.php' ;
-
-        include_once($sSkdPath);
-
         $get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `code` = 'ecpaylogistic'");
         $ecpaylogisticSetting=array();
         foreach($get_ecpaylogistic_setting_query->rows as $value){
             $ecpaylogisticSetting[$value["key"]]=$value["value"];
         }
         try {
-            $AL = new ECPayLogistics();
-            $AL->HashKey = $ecpaylogisticSetting[$this->prefix . 'hashkey'];
-            $AL->HashIV = $ecpaylogisticSetting[$this->prefix . 'hashiv'];
-            $AL->CheckOutFeedback($this->request->post);
-            $query = $this->db->query('Select * from '.DB_PREFIX.'ecpaylogistic_response where AllPayLogisticsID='.$this->db->escape($this->request->post['AllPayLogisticsID']));
+            $factory = new Factory([
+				'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
+				'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+				'hashMethod'    => 'md5',
+			]);
+            $checkoutResponse = $factory->create(VerifiedArrayResponse::class);
+
+            $query = $this->db->query('Select * from ' . DB_PREFIX . 'ecpaylogistic_response where AllPayLogisticsID=' . $this->db->escape($this->request->post['1|AllPayLogisticsID']));
             if ($query->num_rows) {
                 $aAL_info = $query->rows[0];
-                $this->db->query("UPDATE `" . DB_PREFIX . "order` SET order_status_id = 1 WHERE order_id = ".(int)$aAL_info['order_id']);
+                $this->db->query("UPDATE " . DB_PREFIX . "order SET order_status_id = 1 WHERE order_id = ".(int)$aAL_info['order_id']);
                 $sMsg = "綠界科技廠商管理後台更新門市通知:<br>" . print_r($this->request->post, true);
                 $this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$aAL_info['order_id'] . "', order_status_id = '1', notify = '0', comment = '" . $this->db->escape($sMsg) . "', date_added = NOW()");
                 echo '1|OK';
@@ -279,7 +274,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
             echo '0|' . $e->getMessage();
         }
     }
-    
+
     /*
     |--------------------------------------------------------------------------
     | INVOICE
@@ -395,7 +390,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
         $dataBase64Decode = $this->base64Decode($data);
         $dataAesDecrypt = $this->aesDecrypt($dataBase64Decode, $hashKey, $hashIv) ;
         $sessionId = $this->urlDecode($dataAesDecrypt);
-        
+
         return $sessionId;
     }
 
@@ -407,7 +402,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
     public function sessionEncrypt($sessionId)
     {
         $hashKey = $this->config->get($this->prefix . 'hashkey');
-        $hashIv  = $this->config->get($this->prefix . 'hashiv');   
+        $hashIv  = $this->config->get($this->prefix . 'hashiv');
 
         $dataEncrypt = $this->aesEncrypt($sessionId, $hashKey, $hashIv);
         $dataBase64Encode = $this->base64Encode($dataEncrypt);

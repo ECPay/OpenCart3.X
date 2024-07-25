@@ -17,7 +17,7 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 	private $ecpay_logistic_module_path = '';
 
 	// Constructor
-	public function __construct($registry) 
+	public function __construct($registry)
 	{
 		parent::__construct($registry);
 
@@ -26,9 +26,9 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 		$this->id_prefix = 'shipping-' . $this->module_name;
 		$this->setting_prefix = 'shipping_' . $this->module_name . '_';
 		$this->module_path = 'extension/payment/' . $this->module_name;
-		
+
 		$this->name_prefix = 'shipping_' . $this->module_name;
-		$this->load->model($this->module_path);	
+		$this->load->model($this->module_path);
 
 		// invoice
 		$this->ecpay_invoice_setting_prefix = 'payment_' . $this->ecpay_invoice_module_name . '_';
@@ -37,7 +37,7 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 		$this->ecpay_logistic_module_path = 'extension/shipping/' . $this->ecpay_logistic_module_name;
 	}
 
-	public function index() 
+	public function index()
 	{
 		// PAYMENT
 		if (true) {
@@ -51,7 +51,7 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 			$data['module_name'] = $this->module_name;
 			$data['name_prefix'] = $this->name_prefix;
 		}
-		
+
 		 // INVOICE
 		if (true) {
 			// 判斷電子發票模組是否啟用 1.啟用 0.未啟用
@@ -61,7 +61,7 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 			$data['ecpay_invoce_text_title'] = $this->language->get($this->ecpay_invoice_module_name . '_text_title');
 		}
 
-		// 轉導至門市選擇 
+		// 轉導至門市選擇
 		$data['redirect_url'] = $this->url->link(
 			$this->ecpay_logistic_module_path . '/express_map',
 			'',
@@ -91,17 +91,17 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 	}
 
 	// 依照物流過濾付款方式(EVENT)
-	public function chk_payment_method(&$route, &$data, &$output) 
+	public function chk_payment_method(&$route, &$data, &$output)
 	{
 		if ($data[0] == 'payment') {
-			$delivery_method_collection = array('ecpaylogistic.unimart_collection','ecpaylogistic.fami_collection','ecpaylogistic.hilife_collection');
-			$delivery_method = array('ecpaylogistic.unimart','ecpaylogistic.fami','ecpaylogistic.hilife');
+			$delivery_method_collection = array('ecpaylogistic.unimart_collection','ecpaylogistic.fami_collection','ecpaylogistic.hilife_collection','ecpaylogistic.okmart_collection');
+			$delivery_method = array('ecpaylogistic.unimart','ecpaylogistic.fami','ecpaylogistic.hilife','ecpaylogistic.okmart','ecpaylogistic.post', 'ecpaylogistic.tcat');
 
 			if (isset( $this->session->data['shipping_method']['code'])) {
-				
+
 				// 判斷貨到付款
 				if (in_array($this->session->data['shipping_method']['code'], $delivery_method_collection)) {
-					
+
 					// 只留下貨到付款
 					foreach ($output as $key => $payment ) {
 						if ($payment['code'] != 'ecpaylogistic') {
@@ -128,7 +128,7 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 						}
 					}
 				}
-			} 
+			}
 			else {
 
 				// 不需要物流的商品，移除貨到付款選項
@@ -138,6 +138,6 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 					}
 				}
 			}
-		}	
+		}
 	}
 }

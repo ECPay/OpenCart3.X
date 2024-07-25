@@ -45,9 +45,17 @@
                 <li><a href="#tab-hilife" data-toggle="tab">{{ text_hilife }}</a></li>
 				<!-- 萊爾富超商取貨付款 //-->
                 <li><a href="#tab-hilife-collection" data-toggle="tab">{{ text_hilife_collection }}</a></li>
+				<!-- OK超商取貨 //-->
+                <li><a href="#tab-okmart" data-toggle="tab">{{ text_okmart }}</a></li>
+				<!-- OK超商取貨付款 //-->
+                <li><a href="#tab-okmart-collection" data-toggle="tab">{{ text_okmart_collection }}</a></li>
+				<!-- 中華郵政 //-->
+                <li><a href="#tab-post" data-toggle="tab">{{ text_post }}</a></li>
+				<!--黑貓宅配-->
+                <li><a href="#tab-tcat" data-toggle="tab">{{ text_tcat }}</a></li>
               </ul>
             </div>
-			
+
 			<div class="col-sm-10">
 			  <div class="tab-content">
                 <!-- 一般設定 //-->
@@ -112,6 +120,18 @@
 					</div>
 				  </div>
 				  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-name">{{ entry_sender_zipcode }}</label>
+                    <div class="col-sm-10">
+                      <input type="text" name="shipping_ecpaylogistic_sender_zipcode" value="{{ shipping_ecpaylogistic_sender_zipcode }}" placeholder="{{ text_sender_zipcode }}" id="input-name" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-name">{{ entry_sender_address }}</label>
+                    <div class="col-sm-10">
+                      <input type="text" name="shipping_ecpaylogistic_sender_address" value="{{ shipping_ecpaylogistic_sender_address }}" placeholder="{{ text_sender_address }}" id="input-name" class="form-control" />
+                    </div>
+                  </div>
+				  <div class="form-group">
 					<label class="col-sm-2 control-label" for="input-name">{{ entry_FreeShippingAmount }}</label>
 					<div class="col-sm-10">
 					  <input type="text" name="shipping_ecpaylogistic_free_shipping_amount" value="{{ shipping_ecpaylogistic_free_shipping_amount }}" placeholder="{{ entry_FreeShippingAmount }}" id="input-name" class="form-control" />
@@ -143,7 +163,7 @@
 					<div class="col-sm-10">
 						<select name="shipping_ecpaylogistic_order_status" class="form-control">
 						{% for order_status in order_statuses %}
-							{% if order_status.order_status_id == shipping_ecpaylogistic_order_status %} 
+							{% if order_status.order_status_id == shipping_ecpaylogistic_order_status %}
 								<option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
 							{% else %}
 								<option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
@@ -158,7 +178,7 @@
 					  <select name="shipping_ecpaylogistic_geo_zone_id" id="input-geo-zone" class="form-control">
 						<option value="0">{{ text_all_zones }}</option>
 						{% for geo_zone in geo_zones %}
-							{% if geo_zone.geo_zone_id == shipping_ecpaylogistic_geo_zone_id %} 
+							{% if geo_zone.geo_zone_id == shipping_ecpaylogistic_geo_zone_id %}
 								<option value="{{ geo_zone.geo_zone_id }}" selected="selected">{{ geo_zone.name }}</option>
 							{% else %}
 								<option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>
@@ -232,7 +252,7 @@
 						{% endfor %}
 					  </select>
 					</div>
-				  </div>				  
+				  </div>
 				</div>
 				<!-- 全家超商取貨 //-->
 				<div class="tab-pane" id="tab-fami">
@@ -244,7 +264,7 @@
 					  <div class="text-danger">{{ error_FAMI_fee }}</div>
 					  {% endif %}
 					</div>
-				  </div>	
+				  </div>
 				  <div class="form-group">
 					<label class="col-sm-2 control-label" for="input-ecpaylogistic-fami-status">{{ entry_status }}</label>
 					<div class="col-sm-10">
@@ -258,7 +278,7 @@
 						{% endfor %}
 					  </select>
 					</div>
-				  </div>				  
+				  </div>
 				</div>
 				<!-- 全家超商取貨付款 //-->
 				<div class="tab-pane" id="tab-fami-collection">
@@ -297,7 +317,7 @@
 					  <div class="text-danger">{{ error_HILIFE_fee }}</div>
 					  {% endif %}
 					</div>
-				  </div>	
+				  </div>
 				  <div class="form-group">
 					<label class="col-sm-2 control-label" for="input-ecpaylogistic-hilife-status">{{ entry_status }}</label>
 					<div class="col-sm-10">
@@ -311,7 +331,7 @@
 						{% endfor %}
 					  </select>
 					</div>
-				  </div>				  
+				  </div>
 				</div>
 				<!-- 萊爾富超商取貨付款 //-->
 				<div class="tab-pane" id="tab-hilife-collection">
@@ -339,6 +359,137 @@
 					</div>
 				  </div>
 				</div>
+				<!-- OK超商取貨 //-->
+				<div class="tab-pane" id="tab-okmart">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_OKMART_fee }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_okmart_fee" value="{{ shipping_ecpaylogistic_okmart_fee }}" placeholder="{{ entry_OKMART_fee }}" id="input-name" class="form-control" />
+					  {% if error_OKMART_fee %}
+					  <div class="text-danger">{{ error_OKMART_fee }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-okmart-status">{{ entry_status }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_okmart_status" id="input-ecpaylogistic-okmart-status" class="form-control">
+					  	{% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+							{% if ecpayl_status.value == shipping_ecpaylogistic_okmart_status %}
+								<option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+							{% else %}
+								<option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>
+				</div>
+				<!-- OK超商取貨付款 //-->
+				<div class="tab-pane" id="tab-okmart-collection">
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-name">{{ entry_OKMART_Collection_fee }}</label>
+					<div class="col-sm-10">
+					  <input type="text" name="shipping_ecpaylogistic_okmart_collection_fee" value="{{ shipping_ecpaylogistic_okmart_collection_fee }}" placeholder="{{ entry_OKMART_Collection_fee }}" id="input-name" class="form-control" />
+					  {% if error_OKMART_Collection_fee %}
+					  <div class="text-danger">{{ error_OKMART_Collection_fee }}</div>
+					  {% endif %}
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="col-sm-2 control-label" for="input-ecpaylogistic-okmart-collection-status">{{ entry_status }}</label>
+					<div class="col-sm-10">
+					  <select name="shipping_ecpaylogistic_okmart_collection_status" id="ecpaylogistic-okmart-collection-status" class="form-control">
+						{% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+							{% if ecpayl_status.value == shipping_ecpaylogistic_okmart_collection_status %}
+								<option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+							{% else %}
+								<option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+							{% endif %}
+						{% endfor %}
+					  </select>
+					</div>
+				  </div>
+				</div>
+                <!-- 中華郵政 //-->
+                <div class="tab-pane" id="tab-post">
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-name">{{ entry_POST_1_fee }}</label>
+                    <div class="col-sm-10">
+                      <input type="text" name="shipping_ecpaylogistic_post_1_fee" value="{{ shipping_ecpaylogistic_post_1_fee }}" placeholder="{{ entry_POST_1_fee }}" id="input-name" class="form-control" />
+                      {% if error_POST_1_fee %}
+                      <div class="text-danger">{{ error_POST_1_fee }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-name">{{ entry_POST_2_fee }}</label>
+                    <div class="col-sm-10">
+                      <input type="text" name="shipping_ecpaylogistic_post_2_fee" value="{{ shipping_ecpaylogistic_post_2_fee }}" placeholder="{{ entry_POST_2_fee }}" id="input-name" class="form-control" />
+                      {% if error_POST_2_fee %}
+                      <div class="text-danger">{{ error_POST_2_fee }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-name">{{ entry_POST_3_fee }}</label>
+                    <div class="col-sm-10">
+                      <input type="text" name="shipping_ecpaylogistic_post_3_fee" value="{{ shipping_ecpaylogistic_post_3_fee }}" placeholder="{{ entry_POST_3_fee }}" id="input-name" class="form-control" />
+                      {% if error_POST_3_fee %}
+                      <div class="text-danger">{{ error_POST_3_fee }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-name">{{ entry_POST_4_fee }}</label>
+                    <div class="col-sm-10">
+                      <input type="text" name="shipping_ecpaylogistic_post_4_fee" value="{{ shipping_ecpaylogistic_post_4_fee }}" placeholder="{{ entry_POST_4_fee }}" id="input-name" class="form-control" />
+                      {% if error_POST_4_fee %}
+                      <div class="text-danger">{{ error_POST_4_fee }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-ecpaylogistic-post-status">{{ entry_status }}</label>
+                    <div class="col-sm-10">
+                      <select name="shipping_ecpaylogistic_post_status" id="ecpaylogistic-post-status" class="form-control">
+                        {% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+                            {% if ecpayl_status.value == shipping_ecpaylogistic_post_status %}
+                                <option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+                            {% else %}
+                                <option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+                            {% endif %}
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+				<!--黑貓宅配-->
+				<div class="tab-pane" id="tab-tcat">
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-name">{{ entry_TCAT_fee }}</label>
+                    <div class="col-sm-10">
+                      <input type="text" name="shipping_ecpaylogistic_tcat_fee" value="{{ shipping_ecpaylogistic_tcat_fee }}" placeholder="{{ entry_TCAT_fee }}" id="input-name" class="form-control" />
+                      {% if error_TCAT_fee %}
+                      <div class="text-danger">{{ error_TCAT_fee }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-ecpaylogistic-tcat-status">{{ entry_status }}</label>
+                    <div class="col-sm-10">
+                      <select name="shipping_ecpaylogistic_tcat_status" id="ecpaylogistic-tcat-status" class="form-control">
+                        {% for ecpayl_status in shipping_ecpaylogistic_statuses %}
+                            {% if ecpayl_status.value == shipping_ecpaylogistic_tcat_status %}
+                                <option value="{{ ecpayl_status.value }}" selected="selected">{{ ecpayl_status.text }}</option>
+                            {% else %}
+                                <option value="{{ ecpayl_status.value }}">{{ ecpayl_status.text }}</option>
+                            {% endif %}
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                </div>
 			  </div>
 			</div>
 		</div>
