@@ -361,10 +361,10 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                         }
                         break;
 
-                    // Get code 2:ATM 3:CVS 4:BARCODE
+                    // 2 => ATM 取號成功結果通知
+                    // 10100073 => CVS、BARCODE 取號成功結果通知
                     case 2:
-                    case 3:
-                    case 4:
+                    case 10100073:
                         $status_id = $order_status_id;
                         $payment_type = explode('_', $info['PaymentType']);
                         $pattern = $this->language->get($this->lang_prefix . 'text_' . strtolower($payment_type[0]) . '_comment');
