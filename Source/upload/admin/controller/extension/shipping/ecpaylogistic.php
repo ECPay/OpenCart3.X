@@ -389,7 +389,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 						'post' => 'POST',
 						'tcat' => 'TCAT',
 					];
-				} 
+				}
 				else {
 					$shippingMethod = [
 						'fami' => 'FAMI',
@@ -696,47 +696,50 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		$create_shipping_flag = true ;
 		$order_info = $this->model_sale_order->getOrder($data['order_id']);
 
-		// 判斷物流方式
-		if (strpos($order_info['shipping_code'], 'ecpaylogistic.') === false) {
-			$create_shipping_flag = false ;
-		}
-
-		// 物流類型
-		$logisticSubType = explode('.', $order_info['shipping_code']);
-		$logisticsType = $this->helper->get_ecpay_logistics_type($logisticSubType[1]);
-
-		// 判斷物流狀態
-		$ecpaylogistic_query = $this->db->query('Select * from ' . DB_PREFIX.'ecpaylogistic_response where order_id='.(int)$data['order_id']);
-
-		// 已經建立過物流訂單
-		if ($ecpaylogistic_query->num_rows) {
-			$create_shipping_flag = false ;
-		}
-
-		// 顯示建立按鈕
-		if ($create_shipping_flag) {
-			$create_shipping_order_url = $this->url->link(
-				$this->extension_route .'/'. $this->module_name . '/create_shipping_order',
-				'user_token=' . $token . '&order_id=' . $data['order_id'],
-				$this->url_secure
-			);
-
-			$express_map_url = $this->url->link(
-				$this->extension_route .'/'. $this->module_name . '/express_map',
-				'user_token=' . $token . '&order_id=' . $data['order_id'],
-				$this->url_secure
-			);
-
-			// 變更門市按鈕
-			if ($logisticsType === 'CVS') {
-				if (isset($data['shipping_address_1'])) {
-					$data['shipping_address_1'] .= "&nbsp;" . '<input type="button" id="ecpaylogistic_store" class="btn btn-primary btn-xs" value="變更門市"  onClick="ecpay_express_map(\'' . $express_map_url . '\')"/>';
-				} else {
-					$data['shipping_address'] .= "<br>" . '<input type="button" id="ecpaylogistic_store" class="btn btn-primary btn-xs" value="變更門市"  onClick="ecpay_express_map(\'' . $express_map_url . '\')"/>';
-				}
+		// 訂單沒有物流方式時不繼續
+		if (isset($order_info['shipping_code']) && $order_info['shipping_code'] != '') {
+			// 判斷物流方式
+			if (strpos($order_info['shipping_code'], 'ecpaylogistic.') === false) {
+				$create_shipping_flag = false ;
 			}
 
-			$data['shipping_method'] .= "&nbsp;" . '<input type="button" id="ecpaylogistic" class="btn btn-primary btn-xs" value="建立物流訂單" onClick="ecpay_create_shipping(\'' . $create_shipping_order_url . '\')"/>';
+			// 物流類型
+			$logisticSubType = explode('.', $order_info['shipping_code']);
+			$logisticsType = $this->helper->get_ecpay_logistics_type($logisticSubType[1]);
+
+			// 判斷物流狀態
+			$ecpaylogistic_query = $this->db->query('Select * from ' . DB_PREFIX.'ecpaylogistic_response where order_id='.(int)$data['order_id']);
+
+			// 已經建立過物流訂單
+			if ($ecpaylogistic_query->num_rows) {
+				$create_shipping_flag = false ;
+			}
+
+			// 顯示建立按鈕
+			if ($create_shipping_flag) {
+				$create_shipping_order_url = $this->url->link(
+					$this->extension_route .'/'. $this->module_name . '/create_shipping_order',
+					'user_token=' . $token . '&order_id=' . $data['order_id'],
+					$this->url_secure
+				);
+
+				$express_map_url = $this->url->link(
+					$this->extension_route .'/'. $this->module_name . '/express_map',
+					'user_token=' . $token . '&order_id=' . $data['order_id'],
+					$this->url_secure
+				);
+
+				// 變更門市按鈕
+				if ($logisticsType === 'CVS') {
+					if (isset($data['shipping_address_1'])) {
+						$data['shipping_address_1'] .= "&nbsp;" . '<input type="button" id="ecpaylogistic_store" class="btn btn-primary btn-xs" value="變更門市"  onClick="ecpay_express_map(\'' . $express_map_url . '\')"/>';
+					} else {
+						$data['shipping_address'] .= "<br>" . '<input type="button" id="ecpaylogistic_store" class="btn btn-primary btn-xs" value="變更門市"  onClick="ecpay_express_map(\'' . $express_map_url . '\')"/>';
+					}
+				}
+
+				$data['shipping_method'] .= "&nbsp;" . '<input type="button" id="ecpaylogistic" class="btn btn-primary btn-xs" value="建立物流訂單" onClick="ecpay_create_shipping(\'' . $create_shipping_order_url . '\')"/>';
+			}
 		}
 	}
 
@@ -751,81 +754,85 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 
         $orderInfo = $this->model_sale_order->getOrder($data['order_id']);
 
-        // 判斷物流方式
-        if (strpos($orderInfo['shipping_code'], 'ecpaylogistic.') === false) {
-        	$print_logistic_flag = false;
-        }
+		// 訂單沒有物流方式時不繼續
+		if (isset($orderInfo['shipping_code']) && $orderInfo['shipping_code'] != '') {
 
-        // 判斷物流狀態
-        $ecpaylogistic_query = $this->db->query('Select * from ' . DB_PREFIX . 'ecpaylogistic_response where order_id=' . (int)$data['order_id']);
-
-		 // 尚未建立過物流訂單
-        if ($ecpaylogistic_query->num_rows === 0) {
-        	$print_logistic_flag = false ;
-        }
-
-        // 顯示列印按鈕
-        if ($print_logistic_flag) {
-            $sFieldName = 'code';
-            $sFieldValue = 'shipping_' . $this->module_name;
-            $get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
-
-            $ecpaylogisticSetting = array();
-            foreach($get_ecpaylogistic_setting_query->rows as $value){
-                $ecpaylogisticSetting[$value['key']] = $value['value'];
-            }
-
-			$factory = new Factory([
-				'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
-				'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
-				'hashMethod'    => 'md5',
-			]);
-
-            $action = "";
-			$inputPrint = array();
-
-			$apiLogisticInfo  = $this->helper->get_ecpay_logistic_api_info('print', $ecpaylogistic_query->row['LogisticsSubType'], $ecpaylogisticSetting);
-
-
-
-			$inputPrint = array(
-				'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
-				'AllPayLogisticsID' => $ecpaylogistic_query->row['AllPayLogisticsID'],
-				'PlatformID' => ''
-			);
-
-			switch ($ecpaylogistic_query->row['LogisticsSubType']) {
-				case 'FAMIC2C':
-				case 'HILIFEC2C':
-				case 'OKMARTC2C':
-					try {
-						$inputPrint['CVSPaymentNo'] = $ecpaylogistic_query->row['CVSPaymentNo'];
-					} catch(Exception $e) {
-						echo $e->getMessage();
-					}
-					break;
-				case 'UNIMARTC2C':
-					try {
-						$inputPrint['CVSPaymentNo'] = $ecpaylogistic_query->row['CVSPaymentNo'];
-						$inputPrint['CVSValidationNo'] = $ecpaylogistic_query->row['CVSValidationNo'];
-					} catch(Exception $e) {
-						echo $e->getMessage();
-					}
-					break;
-				case 'FAMI':
-				case 'UNIMART':
-				case 'HILIFE':
-					break;
+			// 判斷物流方式
+			if (strpos($orderInfo['shipping_code'], 'ecpaylogistic.') === false) {
+				$print_logistic_flag = false;
 			}
 
-			$autoSubmitFormService = $factory->create('AutoSubmitFormWithCmvService');
-			$form_print =  $autoSubmitFormService->generate($inputPrint, $apiLogisticInfo['action'], '_Blank','ecpay_print');
+			// 判斷物流狀態
+			$ecpaylogistic_query = $this->db->query('Select * from ' . DB_PREFIX . 'ecpaylogistic_response where order_id=' . (int)$data['order_id']);
 
-			$form_print =  str_replace('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>', '', $form_print);
-			$form_print =  str_replace('</body></html>', '', $form_print);
-			$form_print =  str_replace('<script type="text/javascript">document.getElementById("ecpay_print").submit();</script>', '', $form_print);
+			// 尚未建立過物流訂單
+			if ($ecpaylogistic_query->num_rows === 0) {
+				$print_logistic_flag = false ;
+			}
 
-			$data['shipping_method'] .= "&nbsp;" . '<input type="button" id="ecpaylogistic_print" class="btn btn-primary btn-xs" onclick="document.getElementById(\'ecpay_print\').submit()" id="ecpaylogistic_print" value="列印物流單" />' . $form_print;
+			// 顯示列印按鈕
+			if ($print_logistic_flag) {
+				$sFieldName = 'code';
+				$sFieldValue = 'shipping_' . $this->module_name;
+				$get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
+
+				$ecpaylogisticSetting = array();
+				foreach($get_ecpaylogistic_setting_query->rows as $value){
+					$ecpaylogisticSetting[$value['key']] = $value['value'];
+				}
+
+				$factory = new Factory([
+					'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
+					'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+					'hashMethod'    => 'md5',
+				]);
+
+				$action = "";
+				$inputPrint = array();
+
+				$apiLogisticInfo  = $this->helper->get_ecpay_logistic_api_info('print', $ecpaylogistic_query->row['LogisticsSubType'], $ecpaylogisticSetting);
+
+
+
+				$inputPrint = array(
+					'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
+					'AllPayLogisticsID' => $ecpaylogistic_query->row['AllPayLogisticsID'],
+					'PlatformID' => ''
+				);
+
+				switch ($ecpaylogistic_query->row['LogisticsSubType']) {
+					case 'FAMIC2C':
+					case 'HILIFEC2C':
+					case 'OKMARTC2C':
+						try {
+							$inputPrint['CVSPaymentNo'] = $ecpaylogistic_query->row['CVSPaymentNo'];
+						} catch(Exception $e) {
+							echo $e->getMessage();
+						}
+						break;
+					case 'UNIMARTC2C':
+						try {
+							$inputPrint['CVSPaymentNo'] = $ecpaylogistic_query->row['CVSPaymentNo'];
+							$inputPrint['CVSValidationNo'] = $ecpaylogistic_query->row['CVSValidationNo'];
+						} catch(Exception $e) {
+							echo $e->getMessage();
+						}
+						break;
+					case 'FAMI':
+					case 'UNIMART':
+					case 'HILIFE':
+						break;
+				}
+
+				$autoSubmitFormService = $factory->create('AutoSubmitFormWithCmvService');
+				$form_print =  $autoSubmitFormService->generate($inputPrint, $apiLogisticInfo['action'], '_Blank','ecpay_print');
+
+				$form_print =  str_replace('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>', '', $form_print);
+				$form_print =  str_replace('</body></html>', '', $form_print);
+				$form_print =  str_replace('<script type="text/javascript">document.getElementById("ecpay_print").submit();</script>', '', $form_print);
+
+				$data['shipping_method'] .= "&nbsp;" . '<input type="button" id="ecpaylogistic_print" class="btn btn-primary btn-xs" onclick="document.getElementById(\'ecpay_print\').submit()" id="ecpaylogistic_print" value="列印物流單" />' . $form_print;
+			}
 		}
 	}
 

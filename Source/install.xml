@@ -2,7 +2,7 @@
 <modification>
     <code>ecpaypayment</code>
     <name>ECPay Payment</name>
-    <version>3.0.230730</version>
+    <version>3.0.241120</version>
     <author>ECPay</author>
     <link>https://www.ecpay.com.tw/</link>
     <file path="admin/controller/extension/payment/ecpaylogistic.php">
@@ -17,7 +17,7 @@
                 {
                     if(strpos($file,'extension/payment/ecpaylogistic.php'))
                     {
-                        unset($files[$key]);    
+                        unset($files[$key]);
                     }
                 }
             }
