@@ -37,20 +37,20 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 	// 自動開立發票
 	public function createInvoiceNo($order_id = 0)
 	{
+		// 測試模式
+		$invoice_test_mode = $this->config->get($this->prefix . 'test_mode');
+		$api_info = $this->helper->get_ecpay_invoice_api_info('issue', $invoice_test_mode);
+
 		// 1.參數初始化
-		define('WEB_MESSAGE_NEW_LINE',	'|'); // 前端頁面訊息顯示換行標示語法
+		if (!defined('WEB_MESSAGE_NEW_LINE')) {
+			define('WEB_MESSAGE_NEW_LINE',	'|'); // 前端頁面訊息顯示換行標示語法
+		}
 
 		$sMsg				= '' ;
 		$sMsg_P2 			= '' ;		      // 金額有差異提醒
 		$bError 			= false ; 	      // 判斷各參數是否有錯誤，沒有錯誤才可以開發票
 
 		// 2.取出開立相關參數
-
-		// *連線資訊
-		$nEcpayinvoice_Mid 	   = $this->config->get($this->prefix. 'mid');		// 廠商代號
-		$sEcpayinvoice_Hashkey = $this->config->get($this->prefix. 'hashkey');	// 金鑰
-		$sEcpayinvoice_Hashiv  = $this->config->get($this->prefix. 'hashiv');	// 向量
-
 		// *訂單資訊
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "order` WHERE order_id = '" . (int)$order_id . "'" );
 		$aOrder_Info_Tmp = $query->rows[0] ;
@@ -68,21 +68,21 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 		// 3.判斷資料正確性
 
 		// *MID判斷是否有值
-		if ($nEcpayinvoice_Mid == '') {
+		if ($api_info['merchantId'] == '') {
 			$bError = true ;
-			$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫商店代號(Merchant ID)。';
+			$sMsg  .= (empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE) . '請填寫商店代號(Merchant ID)。';
 		}
 
 		// *HASHKEY判斷是否有值
-		if ($sEcpayinvoice_Hashkey == '') {
+		if ($api_info['hashKey'] == '') {
 			$bError = true ;
-			$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫金鑰(Hash Key)。';
+			$sMsg  .= (empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE) . '請填寫金鑰(Hash Key)。';
 		}
 
 		// *HASHIV判斷是否有值
-		if ($sEcpayinvoice_Hashiv == '') {
+		if ($api_info['hashIv'] == '') {
 			$bError = true ;
-			$sMsg .= ( empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE ) . '請填寫向量(Hash IV)。';
+			$sMsg  .= (empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE) . '請填寫向量(Hash IV)。';
 		}
 
 		// 判斷是否開過發票
@@ -216,13 +216,13 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 				}
 
 				$factory = new Factory([
-					'hashKey' => $sEcpayinvoice_Hashkey,
-					'hashIv' => $sEcpayinvoice_Hashiv,
+					'hashKey' => $api_info['hashKey'],
+					'hashIv' => $api_info['hashIv'],
 				]);
 				$postService = $factory->create('PostWithAesJsonResponseService');
 
 				$data = [
-					'MerchantID'         => $nEcpayinvoice_Mid,
+					'MerchantID'         => $api_info['merchantId'],
 					'RelateNumber'       => $this->helper->get_relate_number($order_id),
 					'CustomerID'         => '',
 					'CustomerIdentifier' => $sCustomerIdentifier,
@@ -245,7 +245,7 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 				];
 
 				$input = [
-					'MerchantID' => $nEcpayinvoice_Mid,
+					'MerchantID' => $api_info['merchantId'],
 					'RqHeader' => [
 						'Timestamp' => time(),
 						'Revision' => '3.0.0',
@@ -253,8 +253,8 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 					'Data' => $data,
 				];
 
-				$api_info = $this->helper->get_ecpay_invoice_api_info('issue', $nEcpayinvoice_Mid);
 				$aReturn_Info = $postService->post($input, $api_info['action']);
+
 			} catch (Exception $e) {
 				// 例外錯誤處理。
 				$sMsg = $e->getMessage();
@@ -286,7 +286,6 @@ class ModelExtensionPaymentecpayinvoice extends Model {
 
 				$this->db->query("UPDATE `" . DB_PREFIX . "order` SET invoice_no = '" . $sInvoice_No . "', invoice_prefix = '" . $this->db->escape($sInvoice_No_Pre) . "' WHERE order_id = '" . (int)$order_id . "'");
 				$this->db->query("INSERT INTO " . DB_PREFIX . "order_history SET order_id = '" . (int)$order_id . "', order_status_id = '" . (int)$aOrder_Info_Tmp['order_status_id'] . "', notify = '0', comment = '" . $this->db->escape($sMsg) . "', date_added = NOW()");
-				$this->db->query("DELETE FROM `" . DB_PREFIX . "invoice_info` WHERE `order_id` = " . (int)$order_id );
 			}
 		} else {
 			// A.寫入LOG

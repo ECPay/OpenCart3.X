@@ -124,4 +124,12 @@ class ModelExtensionPaymentEcpaypayment extends Model {
             $now_time )
     	);
     }
+
+    // 新增綠界金流資訊
+    public function insertEcpayResponsePaymentInfo($order_id, $choose_payment, $merchant_trade_no, $payment_status = 0)
+    {
+        $this->helper->insertEcpayResponsePaymentInfo($order_id, $choose_payment, $merchant_trade_no, $payment_status);
+    }
+ 
+    
 }

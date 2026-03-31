@@ -46,15 +46,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 
     // 電子地圖選擇門市
     public function express_map() {
-        $ecpaylogisticSetting=array();
-
-        $sFieldName = 'code';
-        $sFieldValue = 'shipping_' . $this->ecpay_logistic_module_name;
-        $get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
-
-        foreach( $get_ecpaylogistic_setting_query->rows as $value ) {
-            $ecpaylogisticSetting[$value["key"]] = $value["value"];
-        }
+        $ecpaylogisticSetting = $this->helper->get_logistic_settings();
 
         if ( $ecpaylogisticSetting[$this->prefix . 'type'] == 'C2C' ) {
             $shippingMethod = [
@@ -95,18 +87,24 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
         $dataBase64Encode = $this->sessionEncrypt($sessionId);
 
         $al_iscollection = 'N';
+        if (strpos($this->session->data['shipping_method']['code'],"_collection") !== false) {
+			$al_iscollection = 'Y';
+		}
+
         $al_srvreply = $this->url->link($this->ecpay_logistic_module_path . '/response_map&sid='.$dataBase64Encode,'',$this->url_secure);
 
         try {
+            $api_info = $this->helper->get_ecpay_logistic_api_info('map', $al_subtype, $ecpaylogisticSetting);
+
             $factory = new Factory([
-				'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
-				'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+				'hashKey'       => $api_info['hashKey'],
+				'hashIv'        => $api_info['hashIv'],
 				'hashMethod'    => 'md5',
 			]);
             $autoSubmitFormService = $factory->create('AutoSubmitFormWithCmvService');
 
 			$inputMap = array(
-				'MerchantID'       => $ecpaylogisticSetting[$this->prefix . 'mid'],
+				'MerchantID'       => $api_info['merchantId'],
 				'MerchantTradeNo'  => $this->helper->getMerchantTradeNo($this->session->data['order_id']),
                 'LogisticsType'    => $this->helper->get_logistics_type($al_subtype),
 				'LogisticsSubType' => $al_subtype,
@@ -115,13 +113,12 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 				'ExtraData'        => '',
 			);
 
-            $api_info = $this->helper->get_ecpay_logistic_api_info('map', $al_subtype, $ecpaylogisticSetting);
             $form_map = $autoSubmitFormService->generate($inputMap, $api_info['action'], 'ecpay_map');
 
         } catch (Exception $e) {
             echo $e->getMessage();
         }
-        
+
         echo $form_map;
     }
 
@@ -165,19 +162,13 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 
     // 建立物流訂單回傳
     public function response() {
-        $sFieldName = 'code';
-        $sFieldValue = 'shipping_' . $this->ecpay_logistic_module_name;
-        $get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
-        $ecpaylogisticSetting = array();
-        foreach($get_ecpaylogistic_setting_query->rows as $value)
-        {
-            $ecpaylogisticSetting[$value["key"]]=$value["value"];
-        }
+        $ecpaylogisticSetting = $this->helper->get_logistic_settings();
+        $api_info = $this->helper->get_ecpay_logistic_api_info('', '', $ecpaylogisticSetting);
 
         try {
             $factory = new Factory([
-				'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
-				'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+				'hashKey'       => $api_info['hashKey'],
+				'hashIv'        => $api_info['hashIv'],
 				'hashMethod'    => 'md5',
 			]);
             $checkoutResponse = $factory->create(VerifiedArrayResponse::class);
@@ -247,15 +238,13 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
 
     // Server端物流回傳網址
     public function logistics_c2c_reply() {
-        $get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `code` = 'ecpaylogistic'");
-        $ecpaylogisticSetting=array();
-        foreach($get_ecpaylogistic_setting_query->rows as $value){
-            $ecpaylogisticSetting[$value["key"]]=$value["value"];
-        }
+        $ecpaylogisticSetting = $this->helper->get_logistic_settings();
+        $api_info = $this->helper->get_ecpay_logistic_api_info('', '', $ecpaylogisticSetting);
+
         try {
             $factory = new Factory([
-				'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
-				'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+				'hashKey'       => $api_info['hashKey'],
+				'hashIv'        => $api_info['hashIv'],
 				'hashMethod'    => 'md5',
 			]);
             $checkoutResponse = $factory->create(VerifiedArrayResponse::class);
@@ -384,8 +373,11 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
      */
     public function sessionDecrypt($data)
     {
-        $hashKey = $this->config->get($this->prefix . 'hashkey');
-        $hashIv  = $this->config->get($this->prefix . 'hashiv');
+        $ecpaylogisticSetting = $this->helper->get_logistic_settings();
+        $api_info = $this->helper->get_ecpay_logistic_api_info('', '', $ecpaylogisticSetting);
+
+        $hashKey = $api_info['hashKey'];
+        $hashIv  = $api_info['hashIv'];
 
         $dataBase64Decode = $this->base64Decode($data);
         $dataAesDecrypt = $this->aesDecrypt($dataBase64Decode, $hashKey, $hashIv) ;
@@ -401,8 +393,11 @@ class ControllerExtensionShippingecpayLogistic extends Controller {
      */
     public function sessionEncrypt($sessionId)
     {
-        $hashKey = $this->config->get($this->prefix . 'hashkey');
-        $hashIv  = $this->config->get($this->prefix . 'hashiv');
+        $ecpaylogisticSetting = $this->helper->get_logistic_settings();
+        $api_info = $this->helper->get_ecpay_logistic_api_info('', '', $ecpaylogisticSetting);
+
+        $hashKey = $api_info['hashKey'];
+        $hashIv  = $api_info['hashIv'];
 
         $dataEncrypt = $this->aesEncrypt($sessionId, $hashKey, $hashIv);
         $dataBase64Encode = $this->base64Encode($dataEncrypt);

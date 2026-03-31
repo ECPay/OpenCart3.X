@@ -16,6 +16,8 @@ $_['entry_hashiv']      = '向量(Hash IV)';
 $_['entry_type']        = '類型';
 $_['entry_autoissue']   = '自動開立電子發票';
 $_['entry_status']      = '狀態';
+$_['entry_test_mode']   = '測試模式';
+$_['entry_test_mode_info']  = '若在正式模式下切換為測試模式將會影響訂單接收發票相關通知';
 
 // Error
 $_['error_mid']         = '請輸入' . $_['entry_mid'];

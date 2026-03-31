@@ -16,6 +16,8 @@ $_['entry_hashiv']      = '向量(Hash IV)';
 $_['entry_type']        = '類型';
 $_['entry_autoissue']   = '自動開立電子發票';
 $_['entry_status']      = '狀態';
+$_['entry_test_mode']   = 'Test Mode';
+$_['entry_test_mode_info'] = 'If you switch to Test Mode while in Live Mode, it will affect the receipt of invoice result notifications from ECPay for orders.';
 
 // Error
 $_['error_mid']         = '請輸入' . $_['entry_mid'];

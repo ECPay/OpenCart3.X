@@ -10,12 +10,10 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 	private $module_path = 'extension/shipping/ecpaylogistic';
 	private $extension_route = 'extension/shipping';
 	private $url_secure;
-    private $ecpay_logistic_model_name = '';
-
 
 	// Constructor
 	public function __construct($registry) {
-	parent::__construct($registry);
+		parent::__construct($registry);
 		$this->url_secure = ( empty($this->config->get('config_secure')) ) ? false : true ;
 
         $this->ecpay_logistic_model_name = 'model_extension_shipping_' . $this->module_name;
@@ -34,18 +32,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		$token = $this->session->data['user_token'];
 
 		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
-			$shipping_type_list = array(
-				'unimart_collection',
-				'fami_collection',
-				'hilife_collection',
-				'okmart_collection',
-				'fami',
-				'unimart',
-				'hilife',
-				'okmart',
-				'post',
-				'tcat',
-			);
+			$shipping_type_list = $this->helper->get_ecpay_all_logistics();
 			foreach ($shipping_type_list as $type_name) {
 				if ($this->request->post[$this->prefix . $type_name . '_status'] != '1') {
 					if ($type_name !== 'post') {
@@ -94,6 +81,8 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		$data['entry_mid'] = $this->language->get('entry_mid');
 		$data['entry_hashkey'] = $this->language->get('entry_hashkey');
 		$data['entry_hashiv'] = $this->language->get('entry_hashiv');
+		$data['entry_test_mode'] = $this->language->get('entry_test_mode');
+        $data['entry_test_mode_info'] = $this->language->get('entry_test_mode_info');
 		$data['entry_type'] = $this->language->get('entry_type');
 		$data['entry_geo_zone'] = $this->language->get('entry_geo_zone');
 		$data['entry_status'] = $this->language->get('entry_status');
@@ -112,6 +101,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		$data['entry_FAMI_Collection_fee'] = $this->language->get('entry_FAMI_Collection_fee');
 		$data['entry_HILIFE_Collection_fee'] = $this->language->get('entry_HILIFE_Collection_fee');
 		$data['entry_OKMART_Collection_fee'] = $this->language->get('entry_OKMART_Collection_fee');
+		$data['entry_TCAT_Collection_fee'] = $this->language->get('entry_TCAT_Collection_fee');
 		$data['entry_UNIMART_fee'] = $this->language->get('entry_UNIMART_fee');
 		$data['entry_FAMI_fee'] = $this->language->get('entry_FAMI_fee');
 		$data['entry_HILIFE_fee'] = $this->language->get('entry_HILIFE_fee');
@@ -132,10 +122,12 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 			'mid',
 			'hashkey',
 			'hashiv',
+			'test_mode',
 			'UNIMART_Collection_fee',
 			'FAMI_Collection_fee',
 			'HILIFE_Collection_fee',
 			'OKMART_Collection_fee',
+			'TCAT_Collection_fee',
 			'FreeShippingAmount',
 			'MinAmount',
 			'MaxAmount',
@@ -167,11 +159,11 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		);
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-            		'href' => $this->url->link('marketplace/extension', 'user_token=' . $token . '&type=shipping', true)
+			'href' => $this->url->link('marketplace/extension', 'user_token=' . $token . '&type=shipping', true)
 		);
 		$data['breadcrumbs'][] = array(
-            		'text' => $heading_title,
-            		'href' => $this->url->link($this->module_path, 'user_token=' . $token, true)
+			'text' => $heading_title,
+			'href' => $this->url->link($this->module_path, 'user_token=' . $token, true)
 		);
 
 		$data[$this->prefix . 'types'] = array();
@@ -194,6 +186,16 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 			'text' => $this->language->get('text_disabled')
 		);
 
+		$data[$this->prefix . 'test_modes'] = array();
+		$data[$this->prefix . 'test_modes'][] = array(
+			'value' => '0',
+			'text' => $this->language->get('text_disabled')
+		);
+		$data[$this->prefix . 'test_modes'][] = array(
+			'value' => '1',
+			'text' => $this->language->get('text_enabled')
+		);
+
 		$this->load->model('localisation/geo_zone');
 		$data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
 
@@ -204,53 +206,56 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		$data['cancel'] = $this->url->link('marketplace/extension', 'user_token=' . $token . '&type=shipping', true);
 
 		// Get the setting
-	        $settings = array(
-	            'mid',
-	            'hashkey',
-	            'hashiv',
-	            'type',
-	            'unimart_collection_fee',
-	            'fami_collection_fee',
-	            'hilife_collection_fee',
-	            'okmart_collection_fee',
-				'unimart_fee',
-	            'fami_fee',
-	            'hilife_fee',
-	            'okmart_fee',
-				'post_1_fee',
-                'post_2_fee',
-                'post_3_fee',
-                'post_4_fee',
-                'tcat_fee',
-	            'unimart_status',
-	            'fami_status',
-	            'hilife_status',
-	            'okmart_status',
-				'post_status',
-				'tcat_status',
-	            'unimart_collection_status',
-	            'fami_collection_status',
-	            'hilife_collection_status',
-	            'okmart_collection_status',
-	            'geo_zone_id',
-	            'status',
-	            'free_shipping_amount',
-	            'max_amount',
-	            'min_amount',
-	            'order_status',
-	            'sender_name',
-	            'sender_cellphone',
-				'sender_zipcode',
-				'sender_address',
-	        );
-	        foreach ($settings as $name) {
-	        	$variable_name = $this->prefix . $name;
-	            	if (isset($this->request->post[$variable_name])) {
-					$data[$variable_name] = $this->request->post[$variable_name];
-				} else {
-					$data[$variable_name] = $this->config->get($variable_name);
-				}
-	        }
+		$settings = array(
+			'mid',
+			'hashkey',
+			'hashiv',
+			'test_mode',
+			'type',
+			'unimart_collection_fee',
+			'fami_collection_fee',
+			'hilife_collection_fee',
+			'okmart_collection_fee',
+			'tcat_collection_fee',
+			'unimart_fee',
+			'fami_fee',
+			'hilife_fee',
+			'okmart_fee',
+			'post_1_fee',
+			'post_2_fee',
+			'post_3_fee',
+			'post_4_fee',
+			'tcat_fee',
+			'unimart_status',
+			'fami_status',
+			'hilife_status',
+			'okmart_status',
+			'post_status',
+			'tcat_status',
+			'unimart_collection_status',
+			'fami_collection_status',
+			'hilife_collection_status',
+			'okmart_collection_status',
+			'tcat_collection_status',
+			'geo_zone_id',
+			'status',
+			'free_shipping_amount',
+			'max_amount',
+			'min_amount',
+			'order_status',
+			'sender_name',
+			'sender_cellphone',
+			'sender_zipcode',
+			'sender_address',
+		);
+		foreach ($settings as $name) {
+			$variable_name = $this->prefix . $name;
+				if (isset($this->request->post[$variable_name])) {
+				$data[$variable_name] = $this->request->post[$variable_name];
+			} else {
+				$data[$variable_name] = $this->config->get($variable_name);
+			}
+		}
 
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
@@ -264,19 +269,19 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 			$this->error['warning'] = $this->language->get('error_permission');
 		}
 
-			// Required fields validate
-	        $require_fields = array(
-	            'mid',
-	            'hashkey',
-	            'hashiv',
-	            'sender_name',
-	        );
-	        foreach ($require_fields as $name) {
-	        	if (empty($this->request->post[$this->prefix . $name])) {
-					$this->error[$name] = $this->language->get('error_' . $name);
-				}
-	        }
-	        unset($require_fields);
+		// Required fields validate
+		$require_fields = array(
+			'mid',
+			'hashkey',
+			'hashiv',
+			'sender_name',
+		);
+		foreach ($require_fields as $name) {
+			if (empty($this->request->post[$this->prefix . $name])) {
+				$this->error[$name] = $this->language->get('error_' . $name);
+			}
+		}
+		unset($require_fields);
 
 		$bite_sender_name = $this->bite_str($this->request->post[$this->prefix . 'sender_name'],0,10);
 		if ($bite_sender_name != $this->request->post[$this->prefix . 'sender_name']) {
@@ -285,14 +290,11 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 
 		if ( empty($this->request->post[$this->prefix . 'sender_cellphone'])) {
 			$this->error['sender_cellphone'] = $this->language->get('error_sender_cellphone');
+		} else {
+			if ( !preg_match('/^[0-9]{10}$/', $this->request->post[$this->prefix . 'sender_cellphone'] ) ) {
+				$this->error['sender_cellphone'] = $this->language->get('error_sender_cellphone_length');
+			}
 		}
-		else{
-			if( !preg_match('/^[0-9]{10}$/', $this->request->post[$this->prefix . 'sender_cellphone'] ) )
-	        	{
-	        		$this->error['sender_cellphone'] = $this->language->get('error_sender_cellphone_length');
-	        	}
-		}
-
 
 		// Shipping fee validation
 		$shipping_type_list = array(
@@ -300,6 +302,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 			'fami_collection' => 'FAMI_Collection',
 			'hilife_collection' => 'HILIFE_Collection',
 			'okmart_collection' => 'OKMART_Collection',
+			'tcat_collection' => 'TCAT_Collection',
 			'fami' => 'FAMI',
 			'unimart' => 'UNIMART',
 			'hilife' => 'HILIFE',
@@ -310,20 +313,20 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		foreach ($shipping_type_list as $type_name => $error_type_name) {
 			if ($this->request->post[$this->prefix . $type_name . '_status'] == '1') {
 				if ($type_name !== 'post') {
-					if(!is_numeric($this->request->post[$this->prefix . $type_name . '_fee']) || $this->request->post[$this->prefix . $type_name . '_fee'] < 0){
+					if (!is_numeric($this->request->post[$this->prefix . $type_name . '_fee']) || $this->request->post[$this->prefix . $type_name . '_fee'] < 0) {
 						$this->error[$error_type_name . '_fee'] = $this->language->get('error_' . $error_type_name . '_fee');
 					}
 				} else {
-					if(!is_numeric($this->request->post[$this->prefix . $type_name . '_1_fee']) || $this->request->post[$this->prefix . $type_name . '_1_fee'] < 0){
+					if (!is_numeric($this->request->post[$this->prefix . $type_name . '_1_fee']) || $this->request->post[$this->prefix . $type_name . '_1_fee'] < 0) {
 						$this->error[$error_type_name . '_1_fee'] = $this->language->get('error_' . $error_type_name . '_1_fee');
 					}
-					if(!is_numeric($this->request->post[$this->prefix . $type_name . '_2_fee']) || $this->request->post[$this->prefix . $type_name . '_2_fee'] < 0){
+					if (!is_numeric($this->request->post[$this->prefix . $type_name . '_2_fee']) || $this->request->post[$this->prefix . $type_name . '_2_fee'] < 0) {
 						$this->error[$error_type_name . '_2_fee'] = $this->language->get('error_' . $error_type_name . '_2_fee');
 					}
-					if(!is_numeric($this->request->post[$this->prefix . $type_name . '_3_fee']) || $this->request->post[$this->prefix . $type_name . '_3_fee'] < 0){
+					if (!is_numeric($this->request->post[$this->prefix . $type_name . '_3_fee']) || $this->request->post[$this->prefix . $type_name . '_3_fee'] < 0) {
 						$this->error[$error_type_name . '_3_fee'] = $this->language->get('error_' . $error_type_name . '_3_fee');
 					}
-					if(!is_numeric($this->request->post[$this->prefix . $type_name . '_4_fee']) || $this->request->post[$this->prefix . $type_name . '_4_fee'] < 0){
+					if (!is_numeric($this->request->post[$this->prefix . $type_name . '_4_fee']) || $this->request->post[$this->prefix . $type_name . '_4_fee'] < 0) {
 						$this->error[$error_type_name . '_4_fee'] = $this->language->get('error_' . $error_type_name . '_4_fee');
 					}
 				}
@@ -331,13 +334,13 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		}
 		unset($shipping_type_list);
 
-		if (!is_numeric($this->request->post[$this->prefix . 'min_amount']) || $this->request->post[$this->prefix . 'min_amount'] < 0){
+		if (!is_numeric($this->request->post[$this->prefix . 'min_amount']) || $this->request->post[$this->prefix . 'min_amount'] < 0) {
 			$this->error['MinAmount'] = $this->language->get('error_MinAmount');
 		}
-		if (!is_numeric($this->request->post[$this->prefix . 'free_shipping_amount']) || $this->request->post[$this->prefix . 'free_shipping_amount'] < 0){
+		if (!is_numeric($this->request->post[$this->prefix . 'free_shipping_amount']) || $this->request->post[$this->prefix . 'free_shipping_amount'] < 0) {
 			$this->error['FreeShippingAmount'] = $this->language->get('error_FreeShippingAmount');
 		}
-		if (!is_numeric($this->request->post[$this->prefix . 'max_amount']) || $this->request->post[$this->prefix . 'max_amount'] < 0 || $this->request->post[$this->prefix . 'max_amount'] <= $this->request->post[$this->prefix . 'min_amount'] || $this->request->post[$this->prefix . 'max_amount'] >= 20000){
+		if (!is_numeric($this->request->post[$this->prefix . 'max_amount']) || $this->request->post[$this->prefix . 'max_amount'] < 0 || $this->request->post[$this->prefix . 'max_amount'] <= $this->request->post[$this->prefix . 'min_amount'] || $this->request->post[$this->prefix . 'max_amount'] >= 20000) {
 			$this->error['MaxAmount'] = $this->language->get('error_MaxAmount');
 		}
 		if (!$this->error) {
@@ -363,14 +366,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 			$order_info = $this->model_sale_order->getOrder($order_id);
 
 			if ($order_info) {
-				$sFieldName = 'code';
-				$sFieldValue = 'shipping_' . $this->module_name;
-				$get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
-				$ecpaylogisticSetting = array();
-				foreach($get_ecpaylogistic_setting_query->rows as $value) {
-					$ecpaylogisticSetting[$value['key']] = $value['value'];
-				}
-
+				$ecpaylogisticSetting = $this->helper->get_logistic_settings();
 				$logisticSubType = explode(".", $order_info['shipping_code']);
 
 				// 物流類型
@@ -388,6 +384,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 						'okmart_collection' => 'OKMARTC2C',
 						'post' => 'POST',
 						'tcat' => 'TCAT',
+						'tcat_collection' => 'TCAT',
 					];
 				}
 				else {
@@ -400,6 +397,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 						'hilife_collection' => 'HILIFE',
 						'post' => 'POST',
 						'tcat' => 'TCAT',
+						'tcat_collection' => 'TCAT',
 					];
 				}
 
@@ -445,7 +443,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 					$logistics_c2c_reply_url = str_replace("admin/","",$logistics_c2c_reply_url) ;
 
 					$inputLogisticOrder = array(
-                        'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
+						'MerchantID' => $apiLogisticInfo['merchantId'],
                         'MerchantTradeNo' => $MerchantTradeNo,
                         'MerchantTradeDate' => date('Y/m/d H:i:s'),
                         'LogisticsType' => $logisticsType,
@@ -482,7 +480,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 					}
 
                     $inputLogisticOrder = array(
-                        'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
+						'MerchantID' => $apiLogisticInfo['merchantId'],
                         'MerchantTradeNo' => $MerchantTradeNo,
                         'MerchantTradeDate' => date('Y/m/d H:i:s'),
                         'LogisticsType' => $logisticsType,
@@ -504,6 +502,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
                         'Specification' => '0001',
                         'ScheduledPickupTime' => '4',
                         'ScheduledDeliveryTime' => '4',
+						'IsCollection' => $_IsCollection,
                         'ServerReplyURL' => $server_reply_url,
                         'Remark' => 'ecpay_module_opencart',
                     );
@@ -512,8 +511,8 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 				try {
 
 					$factory = new Factory([
-						'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
-						'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+						'hashKey'       => $apiLogisticInfo['hashKey'],
+						'hashIv'        => $apiLogisticInfo['hashIv'],
 						'hashMethod'    => 'md5',
 					]);
 					$postService = $factory->create('PostWithCmvEncodedStrResponseService');
@@ -524,7 +523,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 					$Result = $postService->post($inputLogisticOrder, $apiLogisticInfo['action']);
 
 					// 記錄回傳資訊
-					if(true) {
+					if (true) {
 						$this->saveResponse($order_id, $Result);
 					}
 
@@ -577,7 +576,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		$this->response->setOutput(json_encode($ajax_return));
 	}
 
-	private function bite_str($string, $start, $len, $byte=3){
+	private function bite_str($string, $start, $len, $byte=3) {
 		$str     = "";
 		$count   = 0;
 		$str_len = strlen($string);
@@ -637,12 +636,15 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "hilife_collection_status' , `value` = '0';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "unimart_collection_status' , `value` = '0';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "okmart_collection_status' , `value` = '0';");
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "tcat_collection_status' , `value` = '0';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "order_status' , `value` = '1';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "mid' , `value` = '2000933';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "hashkey' , `value` = 'XBERn1YOvpM9nfZc';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "hashiv' , `value` = 'h1ONHk4P4yqbl5LK';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "type' , `value` = 'C2C';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "sender_name' , `value` = '綠界科技';");
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "test_mode' , `value` = '1';");
+
 
 		// 記錄物流訂單回傳資訊
         $this->db->query("
@@ -772,30 +774,18 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 
 			// 顯示列印按鈕
 			if ($print_logistic_flag) {
-				$sFieldName = 'code';
-				$sFieldValue = 'shipping_' . $this->module_name;
-				$get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
-
-				$ecpaylogisticSetting = array();
-				foreach($get_ecpaylogistic_setting_query->rows as $value){
-					$ecpaylogisticSetting[$value['key']] = $value['value'];
-				}
+				$ecpaylogisticSetting = $this->helper->get_logistic_settings();
+				$apiLogisticInfo  = $this->helper->get_ecpay_logistic_api_info('print', $ecpaylogistic_query->row['LogisticsSubType'], $ecpaylogisticSetting);
 
 				$factory = new Factory([
-					'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
-					'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+					'hashKey'       => $apiLogisticInfo['hashKey'],
+					'hashIv'        => $apiLogisticInfo['hashIv'],
 					'hashMethod'    => 'md5',
 				]);
 
-				$action = "";
 				$inputPrint = array();
-
-				$apiLogisticInfo  = $this->helper->get_ecpay_logistic_api_info('print', $ecpaylogistic_query->row['LogisticsSubType'], $ecpaylogisticSetting);
-
-
-
 				$inputPrint = array(
-					'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
+					'MerchantID' => $apiLogisticInfo['merchantId'],
 					'AllPayLogisticsID' => $ecpaylogistic_query->row['AllPayLogisticsID'],
 					'PlatformID' => ''
 				);
@@ -854,15 +844,7 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		// Token
         $token = $this->session->data['user_token'];
 
-		$ecpaylogisticSetting = array();
-
-		$sFieldName = 'code';
-		$sFieldValue = 'shipping_' . $this->module_name;
-		$get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
-
-		foreach( $get_ecpaylogistic_setting_query->rows as $value ) {
-			$ecpaylogisticSetting[$value["key"]] = $value["value"];
-		}
+		$ecpaylogisticSetting = $this->helper->get_logistic_settings();
 
 		if ( $ecpaylogisticSetting[$this->prefix . 'type'] == 'C2C' ) {
 			$shippingMethod = [
@@ -899,8 +881,10 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		}
 
 		$al_iscollection = 'N';
+		if (strpos($order_info['shipping_code'], '_collection') !== false) {
+			$al_iscollection = 'Y';
+		}
 
-		//
 		$al_srvreply = $this->url->link(
 			$this->extension_route .'/'. $this->module_name . '/response_map',
 			'user_token=' . $token ,
@@ -908,15 +892,17 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 		);
 
 		try {
+			$api_info = $this->helper->get_ecpay_logistic_api_info('map', $al_subtype, $ecpaylogisticSetting);
+
 			$factory = new Factory([
-				'hashKey'       => $ecpaylogisticSetting[$this->prefix . 'hashkey'],
-				'hashIv'        => $ecpaylogisticSetting[$this->prefix . 'hashiv'],
+				'hashKey'       => $api_info['hashKey'],
+				'hashIv'        => $api_info['hashIv'],
 				'hashMethod'    => 'md5',
 			]);
             $autoSubmitFormService = $factory->create('AutoSubmitFormWithCmvService');
 
 			$inputMap = array(
-				'MerchantID' => $ecpaylogisticSetting[$this->prefix . 'mid'],
+				'MerchantID' => $api_info['merchantId'],
                 'LogisticsType'    => $this->helper->get_logistics_type($al_subtype),
 				'MerchantTradeNo' => $this->helper->getMerchantTradeNo($order_id),
 				'LogisticsSubType' => $al_subtype,
@@ -925,7 +911,6 @@ class ControllerExtensionShippingecpayLogistic extends Controller
 				'ExtraData' => '',
 			);
 
-			$api_info = $this->helper->get_ecpay_logistic_api_info('map', $al_subtype, $ecpaylogisticSetting);
             $form_map = $autoSubmitFormService->generate($inputMap, $api_info['action'], 'ecpay_map');
 
 		} catch (Exception $e) {

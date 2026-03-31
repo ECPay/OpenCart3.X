@@ -9,12 +9,17 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 	private $name_prefix = '';
 
 	private $helper = null;
-	private $ecpay_invoice_module_name = 'ecpayinvoice';
-	private $ecpay_invoice_setting_prefix = '';
+
+	// Payment
+	private $ecpay_logistic_payment_module_path = '';
 
 	// Logistic
 	private $ecpay_logistic_module_name = 'ecpaylogistic';
 	private $ecpay_logistic_module_path = '';
+
+	// Invoice
+	private $ecpay_invoice_module_name = 'ecpayinvoice';
+	private $ecpay_invoice_setting_prefix = '';
 
 	// Constructor
 	public function __construct($registry)
@@ -29,6 +34,12 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 
 		$this->name_prefix = 'shipping_' . $this->module_name;
 		$this->load->model($this->module_path);
+
+		$this->load->library('ecpay_logistic_helper');
+        $this->helper = $this->registry->get('ecpay_logistic_helper');
+
+		// payment
+        $this->ecpay_logistic_payment_module_path = 'extension/payment/' . $this->ecpay_logistic_module_name;
 
 		// invoice
 		$this->ecpay_invoice_setting_prefix = 'payment_' . $this->ecpay_invoice_module_name . '_';
@@ -61,12 +72,28 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 			$data['ecpay_invoce_text_title'] = $this->language->get($this->ecpay_invoice_module_name . '_text_title');
 		}
 
-		// 轉導至門市選擇
-		$data['redirect_url'] = $this->url->link(
-			$this->ecpay_logistic_module_path . '/express_map',
-			'',
-			$this->url_secure
-		);
+		// 判斷是否為綠界超商物流
+		$delivery_method = $this->helper->get_ecpay_cvs_logistics();
+
+		if (isset($this->session->data['shipping_method'])){
+
+			$logisticSubType = explode(".", $this->session->data['shipping_method']['code']);
+
+			if (in_array($logisticSubType[1], $delivery_method)) {
+				// 轉導至門市選擇
+				$data['redirect_url'] = $this->url->link(
+					$this->ecpay_logistic_module_path . '/express_map',
+					'',
+					$this->url_secure
+				);
+			} else {
+				$data['redirect_url'] = $this->url->link(
+					$this->ecpay_logistic_payment_module_path . '/update_order_status',
+					'',
+					$this->url_secure
+				);
+			}
+		}
 
 		// Load the template
 		$view_path = $this->module_path;
@@ -94,7 +121,7 @@ class ControllerExtensionPaymentecpaylogistic extends Controller {
 	public function chk_payment_method(&$route, &$data, &$output)
 	{
 		if ($data[0] == 'payment') {
-			$delivery_method_collection = array('ecpaylogistic.unimart_collection','ecpaylogistic.fami_collection','ecpaylogistic.hilife_collection','ecpaylogistic.okmart_collection');
+			$delivery_method_collection = array('ecpaylogistic.unimart_collection','ecpaylogistic.fami_collection','ecpaylogistic.hilife_collection','ecpaylogistic.okmart_collection', 'ecpaylogistic.tcat_collection');
 			$delivery_method = array('ecpaylogistic.unimart','ecpaylogistic.fami','ecpaylogistic.hilife','ecpaylogistic.okmart','ecpaylogistic.post', 'ecpaylogistic.tcat');
 
 			if (isset( $this->session->data['shipping_method']['code'])) {

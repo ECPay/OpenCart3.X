@@ -41,6 +41,8 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 		$data['entry_hashiv'] = $this->language->get('entry_hashiv');
 		$data['entry_autoissue'] = $this->language->get('entry_autoissue');
 		$data['entry_status'] = $this->language->get('entry_status');
+		$data['entry_test_mode'] = $this->language->get('entry_test_mode');
+		$data['entry_test_mode_info'] = $this->language->get('entry_test_mode_info');
 
 		$data['button_save'] = $this->language->get('button_save');
 		$data['button_cancel'] = $this->language->get('button_cancel');
@@ -101,6 +103,16 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 			'text' => $this->language->get('text_enabled')
 		);
 
+		$data[$this->prefix . 'test_modes'] = array();
+		$data[$this->prefix . 'test_modes'][] = array(
+			'value' => '0',
+			'text' => $this->language->get('text_disabled')
+		);
+		$data[$this->prefix . 'test_modes'][] = array(
+			'value' => '1',
+			'text' => $this->language->get('text_enabled')
+		);
+
 		$data['action'] = $this->url->link($this->module_path, 'user_token=' . $token, true);
 		$data['cancel'] = $this->url->link('marketplace/extension', 'user_token=' . $token, true);
 
@@ -111,6 +123,7 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 			'hashiv',
 			'autoissue',
 			'status',
+			'test_mode',
 		);
 
 		foreach ($settings as $name) {
@@ -175,19 +188,19 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 			$nInvoice_Status = $this->config->get($this->prefix . 'status');
 
 			if ($nInvoice_Status == 1) {
+				// 測試模式
+				$invoice_test_mode = $this->config->get($this->prefix . 'test_mode'); 
+				$api_info = $this->helper->get_ecpay_invoice_api_info('issue', $invoice_test_mode);
+
 				// 1.參數初始化
-				define('WEB_MESSAGE_NEW_LINE',	'|'); // 前端頁面訊息顯示換行標示語法
+				if (!defined('WEB_MESSAGE_NEW_LINE')) {
+					define('WEB_MESSAGE_NEW_LINE',	'|'); // 前端頁面訊息顯示換行標示語法
+				}
 				$sMsg				= '';
 				$sMsg_P2			= '';	          // 金額有差異提醒
 				$bError 			= false;          // 判斷各參數是否有錯誤，沒有錯誤才可以開發票
 
 				// 2.取出開立相關參數
-
-				// *連線資訊
-				$nEcpayinvoice_Mid 		= $this->config->get($this->prefix . 'mid');		// 廠商代號
-				$sEcpayinvoice_Hashkey 	= $this->config->get($this->prefix . 'hashkey');	// 金鑰
-				$sEcpayinvoice_Hashiv 	= $this->config->get($this->prefix . 'hashiv');		// 向量
-
 				// *訂單資訊
 				$aOrder_Info_Tmp 		= $this->model_sale_order->getOrder($order_id);			// 訂單資訊
 				$aOrder_Product_Tmp  	= $this->model_sale_order->getOrderProducts($order_id);	// 訂購商品
@@ -205,19 +218,19 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 				}
 
 				// *MID判斷是否有值
-				if ($nEcpayinvoice_Mid == '') {
+				if ($api_info['merchantId'] == '') {
 					$bError = true ;
 					$sMsg  .= (empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE) . '請填寫商店代號(Merchant ID)。';
 				}
 
 				// *HASHKEY判斷是否有值
-				if ($sEcpayinvoice_Hashkey == '') {
+				if ($api_info['hashKey'] == '') {
 					$bError = true ;
 					$sMsg  .= (empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE) . '請填寫金鑰(Hash Key)。';
 				}
 
 				// *HASHIV判斷是否有值
-				if ($sEcpayinvoice_Hashiv == '') {
+				if ($api_info['hashIv'] == '') {
 					$bError = true ;
 					$sMsg  .= (empty($sMsg) ? '' : WEB_MESSAGE_NEW_LINE) . '請填寫向量(Hash IV)。';
 				}
@@ -346,13 +359,13 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						}
 
 						$factory = new Factory([
-							'hashKey' => $sEcpayinvoice_Hashkey,
-							'hashIv' => $sEcpayinvoice_Hashiv,
+							'hashKey' => $api_info['hashKey'],
+							'hashIv' => $api_info['hashIv'],
 						]);
 						$postService = $factory->create('PostWithAesJsonResponseService');
 
 						$data = [
-							'MerchantID'         => $nEcpayinvoice_Mid,
+							'MerchantID'         => $api_info['merchantId'],
 							'RelateNumber'       => $this->helper->get_relate_number($order_id),
 							'CustomerID'         => '',
 							'CustomerIdentifier' => $sCustomerIdentifier,
@@ -375,7 +388,7 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 						];
 
 						$input = [
-							'MerchantID' => $nEcpayinvoice_Mid,
+							'MerchantID' => $api_info['merchantId'],
 							'RqHeader' => [
 								'Timestamp' => time(),
 								'Revision' => '3.0.0',
@@ -383,7 +396,6 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 							'Data' => $data,
 						];
 
-						$api_info = $this->helper->get_ecpay_invoice_api_info('issue', $nEcpayinvoice_Mid);
 						$aReturn_Info = $postService->post($input, $api_info['action']);
 					} catch (Exception $e) {
 						// 例外錯誤處理
@@ -463,5 +475,7 @@ class ControllerExtensionPaymentECPayInvoice extends Controller
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "hashiv' , `value` = 'q9jcZX8Ib9LM8wYk';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "autoissue' , `value` = '0';");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "status' , `value` = '0';");
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "setting` SET `store_id` = 0 , `" . $sFieldName . "` = '" . $sFieldValue . "' , `key` = '" . $this->prefix . "test_mode' , `value` = '1';");
+
 	}
 }

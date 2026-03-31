@@ -34,18 +34,19 @@ class ModelExtensionShippingecpaylogistic extends Model {
 			$status = false;
 		}
 
-		$sFieldName = 'code';
-		$sFieldValue = 'shipping_' . $this->module_name;
-		$get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
-		$ecpaylogisticSetting=array();
-		foreach($get_ecpaylogistic_setting_query->rows as $value){
-			$ecpaylogisticSetting[$value["key"]]=$value["value"];
+		$ecpaylogisticSetting = $this->helper->get_logistic_settings();
+
+		// 超商取貨金額範圍
+		$cvsStatus = true;
+		if ($this->cart->getSubTotal() < $ecpaylogisticSetting[$this->setting_prefix . 'min_amount'] || $this->cart->getSubTotal() > $ecpaylogisticSetting[$this->setting_prefix . 'max_amount'] ) {
+			$cvsStatus = false;
 		}
-		//超商取貨金額範圍
-		if ($this->cart->getSubTotal()<$ecpaylogisticSetting[$this->setting_prefix . 'min_amount'] || $this->cart->getSubTotal()>$ecpaylogisticSetting[$this->setting_prefix . 'max_amount'] ) {
-			$status = false;
+		// 黑貓取貨付款金額範圍1~20000元
+		$tcatCollectionStatus = true;
+		if ($this->cart->getSubTotal() > 20000) {
+			$tcatCollectionStatus = false;
 		}
-		//免運費金額
+		// 免運費金額
 		$isFreeShipping = false;
 		if ($this->cart->getSubTotal()>=$ecpaylogisticSetting[$this->setting_prefix . 'free_shipping_amount']) {
 			$isFreeShipping = true;
@@ -65,107 +66,110 @@ class ModelExtensionShippingecpaylogistic extends Model {
 			$Extra['text_store_info'] = $this->language->get('text_store_info');
 			$Extra['error_no_storeinfo'] = $this->language->get('error_no_storeinfo');
 
-			if ($ecpaylogisticSetting[$this->setting_prefix . 'unimart_status']) {
-				$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'unimart_fee'];
-				$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
-				$quote_data['unimart'] = array(
-						'code'         => 'ecpaylogistic.unimart',
-						'title'        => $this->language->get('text_unimart'),
-						'cost'         => $shipping_cost,
-						'tax_class_id' => 0,
-						'text'         => $quote_text,
-				);
-				$Extra['last_ecpaylogistic_shipping_code'] = 'unimart';
-			}
-			if ($ecpaylogisticSetting[$this->setting_prefix . 'unimart_collection_status']) {
-				$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'unimart_collection_fee'];
-				$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
-				$quote_data['unimart_collection'] = array(
-						'code'         => 'ecpaylogistic.unimart_collection',
-						'title'        => $this->language->get('text_unimart_collection'),
-						'cost'         => $shipping_cost,
-						'tax_class_id' => 0,
-						'text'         => $quote_text,
-				);
-				$Extra['last_ecpaylogistic_shipping_code'] = 'unimart_collection';
-			}
+			if ($cvsStatus) {
+				if ($ecpaylogisticSetting[$this->setting_prefix . 'unimart_status']) {
+					$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'unimart_fee'];
+					$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
+					$quote_data['unimart'] = array(
+							'code'         => 'ecpaylogistic.unimart',
+							'title'        => $this->language->get('text_unimart'),
+							'cost'         => $shipping_cost,
+							'tax_class_id' => 0,
+							'text'         => $quote_text,
+					);
+					$Extra['last_ecpaylogistic_shipping_code'] = 'unimart';
+				}
 
-			if ($ecpaylogisticSetting[$this->setting_prefix . 'fami_status']) {
-				$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'fami_fee'];
-				$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
-				$quote_data['fami'] = array(
-						'code'         => 'ecpaylogistic.fami',
-						'title'        => $this->language->get('text_fami'),
-						'cost'         => $shipping_cost,
-						'tax_class_id' => 0,
-						'text'         => $quote_text,
-				);
-				$Extra['last_ecpaylogistic_shipping_code'] = 'fami';
-			}
+				if ($ecpaylogisticSetting[$this->setting_prefix . 'unimart_collection_status']) {
+					$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'unimart_collection_fee'];
+					$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
+					$quote_data['unimart_collection'] = array(
+							'code'         => 'ecpaylogistic.unimart_collection',
+							'title'        => $this->language->get('text_unimart_collection'),
+							'cost'         => $shipping_cost,
+							'tax_class_id' => 0,
+							'text'         => $quote_text,
+					);
+					$Extra['last_ecpaylogistic_shipping_code'] = 'unimart_collection';
+				}
 
-			if ($ecpaylogisticSetting[$this->setting_prefix . 'fami_collection_status']) {
-				$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'fami_collection_fee'];
-				$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
-				$quote_data['fami_collection'] = array(
-						'code'         => 'ecpaylogistic.fami_collection',
-						'title'        => $this->language->get('text_fami_collection'),
-						'cost'         => $shipping_cost,
-						'tax_class_id' => 0,
-						'text'         => $quote_text,
-				);
-				$Extra['last_ecpaylogistic_shipping_code'] = 'fami_collection';
-			}
+				if ($ecpaylogisticSetting[$this->setting_prefix . 'fami_status']) {
+					$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'fami_fee'];
+					$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
+					$quote_data['fami'] = array(
+							'code'         => 'ecpaylogistic.fami',
+							'title'        => $this->language->get('text_fami'),
+							'cost'         => $shipping_cost,
+							'tax_class_id' => 0,
+							'text'         => $quote_text,
+					);
+					$Extra['last_ecpaylogistic_shipping_code'] = 'fami';
+				}
 
-			if ($ecpaylogisticSetting[$this->setting_prefix . 'hilife_status']) {
-				$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'hilife_fee'];
-				$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
-				$quote_data['hilife'] = array(
-						'code'         => 'ecpaylogistic.hilife',
-						'title'        => $this->language->get('text_hilife'),
-						'cost'         => $shipping_cost,
-						'tax_class_id' => 0,
-						'text'         => $quote_text,
-				);
-				$Extra['last_ecpaylogistic_shipping_code'] = 'hilife';
-			}
+				if ($ecpaylogisticSetting[$this->setting_prefix . 'fami_collection_status']) {
+					$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'fami_collection_fee'];
+					$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
+					$quote_data['fami_collection'] = array(
+							'code'         => 'ecpaylogistic.fami_collection',
+							'title'        => $this->language->get('text_fami_collection'),
+							'cost'         => $shipping_cost,
+							'tax_class_id' => 0,
+							'text'         => $quote_text,
+					);
+					$Extra['last_ecpaylogistic_shipping_code'] = 'fami_collection';
+				}
 
-			if ($ecpaylogisticSetting[$this->setting_prefix . 'hilife_collection_status']) {
-				$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'hilife_collection_fee'];
-				$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
-				$quote_data['hilife_collection'] = array(
-						'code'         => 'ecpaylogistic.hilife_collection',
-						'title'        => $this->language->get('text_hilife_collection'),
-						'cost'         => $shipping_cost,
-						'tax_class_id' => 0,
-						'text'         => $quote_text,
-				);
-				$Extra['last_ecpaylogistic_shipping_code'] = 'hilife_collection';
-			}
+				if ($ecpaylogisticSetting[$this->setting_prefix . 'hilife_status']) {
+					$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'hilife_fee'];
+					$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
+					$quote_data['hilife'] = array(
+							'code'         => 'ecpaylogistic.hilife',
+							'title'        => $this->language->get('text_hilife'),
+							'cost'         => $shipping_cost,
+							'tax_class_id' => 0,
+							'text'         => $quote_text,
+					);
+					$Extra['last_ecpaylogistic_shipping_code'] = 'hilife';
+				}
 
-			if ($ecpaylogisticSetting[$this->setting_prefix . 'okmart_status']) {
-				$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'okmart_fee'];
-				$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
-				$quote_data['okmart'] = array(
-						'code'         => 'ecpaylogistic.okmart',
-						'title'        => $this->language->get('text_okmart'),
-						'cost'         => $shipping_cost,
-						'tax_class_id' => 0,
-						'text'         => $quote_text,
-				);
-				$Extra['last_ecpaylogistic_shipping_code'] = 'okmart';
-			}
+				if ($ecpaylogisticSetting[$this->setting_prefix . 'hilife_collection_status']) {
+					$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'hilife_collection_fee'];
+					$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
+					$quote_data['hilife_collection'] = array(
+							'code'         => 'ecpaylogistic.hilife_collection',
+							'title'        => $this->language->get('text_hilife_collection'),
+							'cost'         => $shipping_cost,
+							'tax_class_id' => 0,
+							'text'         => $quote_text,
+					);
+					$Extra['last_ecpaylogistic_shipping_code'] = 'hilife_collection';
+				}
 
-			if ($ecpaylogisticSetting[$this->setting_prefix . 'okmart_collection_status']) {
-				$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'okmart_collection_fee'];
-				$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
-				$quote_data['okmart_collection'] = array(
-						'code'         => 'ecpaylogistic.okmart_collection',
-						'title'        => $this->language->get('text_okmart_collection'),
-						'cost'         => $shipping_cost,
-						'tax_class_id' => 0,
-						'text'         => $quote_text,
-				);
-				$Extra['last_ecpaylogistic_shipping_code'] = 'okmart_collection';
+				if ($ecpaylogisticSetting[$this->setting_prefix . 'okmart_status']) {
+					$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'okmart_fee'];
+					$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
+					$quote_data['okmart'] = array(
+							'code'         => 'ecpaylogistic.okmart',
+							'title'        => $this->language->get('text_okmart'),
+							'cost'         => $shipping_cost,
+							'tax_class_id' => 0,
+							'text'         => $quote_text,
+					);
+					$Extra['last_ecpaylogistic_shipping_code'] = 'okmart';
+				}
+
+				if ($ecpaylogisticSetting[$this->setting_prefix . 'okmart_collection_status']) {
+					$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'okmart_collection_fee'];
+					$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
+					$quote_data['okmart_collection'] = array(
+							'code'         => 'ecpaylogistic.okmart_collection',
+							'title'        => $this->language->get('text_okmart_collection'),
+							'cost'         => $shipping_cost,
+							'tax_class_id' => 0,
+							'text'         => $quote_text,
+					);
+					$Extra['last_ecpaylogistic_shipping_code'] = 'okmart_collection';
+				}
 			}
 
 			if ($ecpaylogisticSetting[$this->setting_prefix . 'post_status']) {
@@ -198,6 +202,19 @@ class ModelExtensionShippingecpaylogistic extends Model {
 				);
 				$Extra['last_ecpaylogistic_shipping_code'] = 'tcat';
             }
+
+			if ($ecpaylogisticSetting[$this->setting_prefix . 'tcat_collection_status'] && $tcatCollectionStatus) {
+				$shipping_cost = ($isFreeShipping) ? 0 : $ecpaylogisticSetting[$this->setting_prefix . 'tcat_collection_fee'];
+				$quote_text = $this->currency->format($shipping_cost, $this->session->data['currency']);
+				$quote_data['tcat_collection'] = array(
+						'code'         => 'ecpaylogistic.tcat_collection',
+						'title'        => $this->language->get('text_tcat_collection'),
+						'cost'         => $shipping_cost,
+						'tax_class_id' => 0,
+						'text'         => $quote_text,
+				);
+				$Extra['last_ecpaylogistic_shipping_code'] = 'tcat_collection';
+			}
 
 			unset($quote_text);
 

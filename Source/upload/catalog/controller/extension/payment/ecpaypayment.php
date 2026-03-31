@@ -1,8 +1,6 @@
 <?php
 
 use Ecpay\Sdk\Factories\Factory;
-use Ecpay\Sdk\Services\UrlService;
-use Ecpay\Sdk\Exceptions\RtnException;
 use Ecpay\Sdk\Response\VerifiedArrayResponse;
 
 class ControllerExtensionPaymentEcpaypayment extends Controller {
@@ -80,11 +78,40 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 $this->url_secure
             );
 
-
             $view_data_name = $this->module_name . '_' . 'payment_methods';
 
             // Get ECPay payment methods
             $ecpay_payment_methods = $this->config->get($this->setting_prefix . 'payment_methods');
+
+            // 判斷可否使用 ApplePay
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            if (preg_match('/iPhone|iPad|iPod/', $userAgent) !== 1) {
+                unset($ecpay_payment_methods['ApplePay']);
+            }
+
+            // 判斷是否可選TWQR
+            $cart_total = $this->getCartTotal();
+            if (6 > $cart_total || $cart_total > 49999) {
+                unset($ecpay_payment_methods['TWQR']);
+            }
+
+            // 判斷是否可選微信支付
+            if (6 > $cart_total || $cart_total > 500000) {
+                unset($ecpay_payment_methods['WeiXin']);
+            }
+
+            // 判斷是否可選街口支付
+            if (0 > $cart_total || $cart_total > 199999) {
+                unset($ecpay_payment_methods['Jkopay']);
+            }
+
+            // 判斷是否可選定期定額
+            $dca_period_type = $this->config->get($this->setting_prefix . 'dca_period_type');
+            $dca_frequency   = $this->config->get($this->setting_prefix . 'dca_frequency');
+            $dca_exec_times  = $this->config->get($this->setting_prefix . 'dca_exec_times');
+            if (! in_array($dca_period_type, ['Y', 'M', 'D']) || $dca_frequency == '' || $dca_exec_times == '') {
+                unset($ecpay_payment_methods['DCA']);
+            }
 
             if (empty($ecpay_payment_methods) === true) {
                 $ecpay_payment_methods = array();
@@ -128,8 +155,6 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 }
             }
         }
-
-        // var_dump($data);
 
         // Load the template
         $view_path = $this->module_path;
@@ -197,6 +222,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
 
             // 儲存訂單商品重量
             $weight = $this->cart->getWeight();
+            $payment_test_mode = $this->config->get($this->setting_prefix . 'test_mode');
             $this->{$this->model_name}->insertEcpayOrderExtend($order_id, ['goodsWeight' => $weight]);
 
             // Clear the cart
@@ -248,20 +274,23 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 $this->addInvoice($order_id);
             }
 
+            $apiPaymentInfo = $this->helper->get_ecpay_payment_api_info('AioCheckOut', $payment_test_mode);
             $factory = new Factory([
-                'hashKey'   => $this->config->get($this->setting_prefix . 'hash_key'),
-                'hashIv'    => $this->config->get($this->setting_prefix . 'hash_iv'),
+                'hashKey' => $apiPaymentInfo['hashKey'],
+                'hashIv'  => $apiPaymentInfo['hashIv'],
             ]);
 
             $autoSubmitFormService = $factory->create('AutoSubmitFormWithCmvService');
-            $apiPaymentInfo  = $this->helper->get_ecpay_payment_api_info('AioCheckOut', $this->config->get($this->setting_prefix . 'merchant_id'));
 
             // 取得 SDK ChoosePayment
             $sdkPayment = $this->helper->getSdkPayment($choose_payment);
 
             // 組合送往 AIO 參數
+            $encryptedOrderId = $this->helper->encryptForUrlParam($apiPaymentInfo, $order_id);
+            $clientBackQueryString = 'order_id=' . $encryptedOrderId . ($payment_test_mode ? '&test=1' : '');
+
             $input = array(
-                'MerchantID'        => $this->config->get($this->setting_prefix . 'merchant_id'),
+                'MerchantID'        => $apiPaymentInfo['merchantId'],
                 'MerchantTradeNo'   => $this->helper->getMerchantTradeNo($order_id),
                 'MerchantTradeDate' => date('Y/m/d H:i:s'),
                 'PaymentType'       => 'aio',
@@ -271,13 +300,28 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 'ChoosePayment'     => $sdkPayment,
                 'EncryptType'       => 1,
                 'ReturnURL'         => $this->url->link($this->module_path . '/response', '', true),
-                'ClientBackURL'     => $this->url->link('checkout/success'),
+                'ClientBackURL'     => htmlspecialchars_decode($this->url->link($this->module_path . '/client_back', $clientBackQueryString, true)),
                 'PaymentInfoURL'    => $this->url->link($this->module_path . '/response', '', true),
                 'NeedExtraPaidInfo' => 'Y',
             );
 
+            // 街口另外處理選擇付款方式
+            if ($sdkPayment == 'Jkopay') {
+                $input['ChoosePayment'] = 'DigitalPayment';
+                $input['ChooseSubPayment'] = $sdkPayment;
+            }
+
             // 取得額外參數
+            if ($choose_payment == 'dca') {
+                $input['PeriodReturnURL'] = $this->url->link($this->module_path . '/response', '', true);
+                $input['Frequency']       = $this->config->get($this->setting_prefix . 'dca_frequency');
+                $input['ExecTimes']       = $this->config->get($this->setting_prefix . 'dca_exec_times');
+                $input['PeriodType']      = $this->config->get($this->setting_prefix . 'dca_period_type');
+            }
             $input = $this->helper->add_type_info($input, $choose_payment);
+
+            // 紀錄綠界付款資訊
+            $result = $this->helper->insertEcpayResponsePaymentInfo($order_id, $choose_payment, $input['MerchantTradeNo'], 0);
 
             $generateForm = $autoSubmitFormService->generate($input, $apiPaymentInfo['action']);
             echo $generateForm;
@@ -301,9 +345,12 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
         $order = null;
 
         try {
+            $payment_test_mode = $this->config->get($this->setting_prefix . 'test_mode');
+            $apiPaymentInfo    = $this->helper->get_ecpay_payment_api_info('', $payment_test_mode);
+
             $factory = new Factory([
-                'hashKey' => $this->config->get($this->setting_prefix . 'hash_key'),
-                'hashIv' => $this->config->get($this->setting_prefix . 'hash_iv'),
+                'hashKey' => $apiPaymentInfo['hashKey'],
+                'hashIv'  => $apiPaymentInfo['hashIv'],
             ]);
 
             $checkoutResponse = $factory->create(VerifiedArrayResponse::class);
@@ -317,92 +364,152 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
             $create_status_id = $this->config->get($this->setting_prefix . 'create_status');
             $order_total = $order['total'];
 
+            $TradeAmt = 0;
+            if (isset($info['Amount'])) {
+                // 定期定額付款結果時 Amount 會有值
+                $TradeAmt = $info['Amount'];
+            } else if (isset($info['TradeAmt'])) {
+                // 其他付款結果時 TradeAmt 會有值
+                $TradeAmt = $info['TradeAmt'];
+            }
+
             // Check the amounts
-            if (round($info['TradeAmt'], 0) == round($order_total, 0)) {
-                // Update the order status
-                switch($info['RtnCode']) {
-                    // Paid
-                    case 1:
-                        $status_id = $this->config->get($this->setting_prefix . 'success_status');
-                        $pattern = $this->language->get($this->lang_prefix . 'text_payment_result_comment');
-                        $comment = $this->helper->getComment($pattern, $info);
-                        $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, true, false);
-                        unset($status_id, $pattern, $comment);
+            if (round($TradeAmt, 0) == round($order_total, 0)) {
+                if (isset($info['SimulatePaid']) && $info['SimulatePaid'] == 1) {
+                    // 模擬付款 僅執行備註寫入
+                    $status_id = $order_status_id;
+                    $comment   = $this->language->get($this->lang_prefix . 'text_simulate_paid');
+                    $this->model_checkout_order->addHistory($order_id, $status_id, $comment, false, false);
+                    unset($status_id, $comment);
 
-                        // Save AIO response
-                        $result = $this->{$this->model_name}->saveResponse($order_id, $info);
+                } else {
 
-                        // Check E-Invoice model
-                        $ecpay_invoice_status = $this->config->get($this->ecpay_invoice_setting_prefix . 'status');
+                    // 計算定期定額付款結果回傳交易成功最大次數
+                    $maxSuccessTimes = $this->helper->checkDcaMaxTotalSuccessTimes($info['MerchantTradeNo']);
 
-                        // Get E-Invoice model name
-                        $invoice_module_name = '';
-                        $invoice_setting_prefix = '';
+                    // 將綠界回傳付款結果存至 DB
+                    $this->helper->updateEcpayResponsePaymentInfo($order_id, $info);
 
-                        if ($ecpay_invoice_status === '1') {
-                            $invoice_module_name = $this->ecpay_invoice_module_name;
-                            $invoice_setting_prefix = $this->ecpay_invoice_setting_prefix;
-                        }
+                    // Update the order status
+                    switch($info['RtnCode']) {
+                        // Paid
+                        case 1:
+                            $status_id = $this->config->get($this->setting_prefix . 'success_status');
 
-                        // E-Invoice auto issuel
-                        if ($invoice_module_name !== '') {
+                            // 判斷是否為定期定額訂單
+                            if ($info['PeriodType'] == 'Y' || $info['PeriodType'] == 'M' || $info['PeriodType'] == 'D') {
 
-                            // 載入電子發票 Model
-                            $invoice_model_name = 'model_extension_payment_' . $invoice_module_name;
-                            $invoice_module_path = 'extension/payment/' . $invoice_module_name;
-                            $this->load->model($invoice_module_path);
+                                // 確認訂單狀態存在
+                                $is_exist = $this->helper->isEcpayPaymentResponseInfoExist($order_id, $info['MerchantTradeNo']);
 
-                            // 取得自動開立設定值
-                            $invoice_autoissue = $this->config->get($invoice_setting_prefix . 'autoissue');
+                                if ($is_exist) {
+                                    $dca_success_comment = '綠界定期定額訂單第' .$info['TotalSuccessTimes']. '次付款結果回傳';
 
-                            if($invoice_autoissue === '1') {
-                                $this->{$invoice_model_name}->createInvoiceNo($order_id);
+                                    // 確認定期定額訂單最後交易成功次數
+                                    if ($maxSuccessTimes == 0 && $info['TotalSuccessTimes'] == 1) {
+                                        // 第一次
+                                        $dca_success_comment .= '(Master)';
+                                    }
+                                    else {
+                                        // 非第一次
+                                        // 判斷是否已接收過定期定額付款結果，若重複則不處理
+                                        if ($maxSuccessTimes < $info['TotalSuccessTimes']) {
+                                            $order_id = $this->create_dca_order($info, $order_id);
+                                        }
+                                    }
+
+                                    // 增加定期定額分期資訊
+                                    $dca_pattern = $this->language->get($this->lang_prefix . 'text_dca_comment');
+                                    $comment = $this->helper->getComment($dca_pattern, $info, 1);
+                                    $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, true, false);
+                                    unset($dca_pattern, $comment);
+
+                                    // 增加定期定額成功次數資訊
+                                    $this->model_checkout_order->addOrderHistory($order_id, $status_id, $dca_success_comment, true, false);
+                                }
                             }
-                        }
-                        break;
 
-                    // 2 => ATM 取號成功結果通知
-                    // 10100073 => CVS、BARCODE 取號成功結果通知
-                    case 2:
-                    case 10100073:
-                        $status_id = $order_status_id;
-                        $payment_type = explode('_', $info['PaymentType']);
-                        $pattern = $this->language->get($this->lang_prefix . 'text_' . strtolower($payment_type[0]) . '_comment');
-                        $comment = $this->helper->getComment($pattern, $info);
-                        $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, true, false);
-                        unset($status_id, $pattern, $comment);
-                    break;
-
-                    // State error
-                    case 5:
-                        if ($this->{$this->model_name}->isResponsed($order_id) === false) {
-                            // Update payment result
-                            $status_id = $order_status_id;
+                            // 付款結果資訊
                             $pattern = $this->language->get($this->lang_prefix . 'text_payment_result_comment');
                             $comment = $this->helper->getComment($pattern, $info);
                             $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, true, false);
+                            unset($status_id, $pattern, $comment);
 
                             // Save AIO response
                             $result = $this->{$this->model_name}->saveResponse($order_id, $info);
-                        }
+
+                            // Check E-Invoice model
+                            $ecpay_invoice_status = $this->config->get($this->ecpay_invoice_setting_prefix . 'status');
+
+                            // Get E-Invoice model name
+                            $invoice_module_name = '';
+                            $invoice_setting_prefix = '';
+
+                            if ($ecpay_invoice_status === '1') {
+                                $invoice_module_name = $this->ecpay_invoice_module_name;
+                                $invoice_setting_prefix = $this->ecpay_invoice_setting_prefix;
+                            }
+
+                            // E-Invoice auto issuel
+                            if ($invoice_module_name !== '') {
+
+                                // 載入電子發票 Model
+                                $invoice_model_name = 'model_extension_payment_' . $invoice_module_name;
+                                $invoice_module_path = 'extension/payment/' . $invoice_module_name;
+                                $this->load->model($invoice_module_path);
+
+                                // 取得自動開立設定值
+                                $invoice_autoissue = $this->config->get($invoice_setting_prefix . 'autoissue');
+
+                                if($invoice_autoissue === '1') {
+                                    $this->{$invoice_model_name}->createInvoiceNo($order_id);
+                                }
+                            }
+                            break;
+
+                        // 2 => ATM 取號成功結果通知
+                        // 10100073 => CVS、BARCODE 取號成功結果通知
+                        case 2:
+                        case 10100073:
+                            $status_id = $order_status_id;
+                            $payment_type = explode('_', $info['PaymentType']);
+                            $pattern = $this->language->get($this->lang_prefix . 'text_' . strtolower($payment_type[0]) . '_comment');
+                            $comment = $this->helper->getComment($pattern, $info, 1);
+                            $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, true, false);
+                            unset($status_id, $pattern, $comment);
                         break;
 
-                    // Simulate paid
-                    case 6:
-                        $status_id = $order_status_id;
-                        $comment = $this->language->get($this->lang_prefix . 'text_simulate_paid');
-                        $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, false, false);
-                        unset($status_id, $comment);
-                        break;
+                        // State error
+                        case 5:
+                            if ($this->{$this->model_name}->isResponsed($order_id) === false) {
+                                // Update payment result
+                                $status_id = $order_status_id;
+                                $pattern = $this->language->get($this->lang_prefix . 'text_payment_result_comment');
+                                $comment = $this->helper->getComment($pattern, $info, 1);
+                                $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, true, false);
 
-                    default:
-                        $status_id = $this->config->get($this->setting_prefix . 'failed_status');
-                        $pattern = $this->language->get($this->lang_prefix . 'text_failure_comment');
-                        $comment = sprintf(
-                            $pattern,
-                            $info['RtnCode']
-                        );
-                        $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, true, false);
+                                // Save AIO response
+                                $result = $this->{$this->model_name}->saveResponse($order_id, $info);
+                            }
+                            break;
+
+                        // Simulate paid
+                        case 6:
+                            $status_id = $order_status_id;
+                            $comment = $this->language->get($this->lang_prefix . 'text_simulate_paid');
+                            $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, false, false);
+                            unset($status_id, $comment);
+                            break;
+
+                        default:
+                            $status_id = $this->config->get($this->setting_prefix . 'failed_status');
+                            $pattern = $this->language->get($this->lang_prefix . 'text_failure_comment');
+                            $comment = sprintf(
+                                $pattern,
+                                $info['RtnCode']
+                            );
+                            $this->model_checkout_order->addOrderHistory($order_id, $status_id, $comment, true, false);
+                    }
                 }
             }
 
@@ -427,6 +534,211 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
         }
 
         $this->helper->echoAndExit($result_message);
+    }
+
+    /**
+     * AIO 返回商店按鈕轉導結果頁
+     */
+    public function client_back()
+    {
+        if (isset($_GET['order_id'])) {
+            $this->load->model('checkout/order');
+            $test = (isset($_GET['test']) && $_GET['test'] == 1) ? true : false;
+            $apiPaymentInfo = $this->helper->get_ecpay_payment_api_info('AioCheckOut', $test);
+            $orderId = $this->helper->decryptForUrlParam($apiPaymentInfo, $_GET['order_id']);
+
+            if (!$orderId) {
+                $this->response->redirect($this->url->link('common/home', '', true));
+            }
+
+            $order = $this->model_checkout_order->getOrder($orderId);
+            $orderStatusId = $order['order_status_id'];
+
+            // 訂單狀態為取消
+            if ($orderStatusId == '7') {
+                $this->response->redirect($this->url->link('checkout/failure', '', true));
+            }
+        }
+
+        $this->response->redirect($this->url->link('checkout/success', '', true));
+    }
+
+    // 取得購物車總金額(包含所有項目)
+    private function getCartTotal() {
+        $cart_total = 0;
+        $totals = array();
+        $taxes = $this->cart->getTaxes();
+        $total = 0;
+
+        // Because __call can not keep var references so we put them into an array.
+        $total_data = array(
+            'totals' => &$totals,
+            'taxes'  => &$taxes,
+            'total'  => &$total
+        );
+
+        $this->load->model('setting/extension');
+
+        $sort_order = array();
+
+        $results = $this->model_setting_extension->getExtensions('total');
+
+        foreach ($results as $key => $value) {
+            $sort_order[$key] = $this->config->get('total_' . $value['code'] . '_sort_order');
+        }
+
+        array_multisort($sort_order, SORT_ASC, $results);
+
+        foreach ($results as $result) {
+            if ($this->config->get('total_' . $result['code'] . '_status')) {
+                $this->load->model('extension/total/' . $result['code']);
+
+                // We have to put the totals in an array so that they pass by reference.
+                $this->{'model_extension_total_' . $result['code']}->getTotal($total_data);
+            }
+        }
+
+        $sort_order = array();
+
+        foreach ($totals as $key => $value) {
+            $sort_order[$key] = $value['sort_order'];
+        }
+
+        foreach ($totals as $total) {
+            if ($total['code'] === 'total') {
+                $cart_total = $total['value'];
+                break;
+            }
+        }
+
+        return $cart_total;
+    }
+
+    /**
+     * 建立定期定額新訂單
+     * @param array $info
+     * @param int $order_id
+     */
+    public function create_dca_order($info, $order_id)
+    {
+        $this->load->model('checkout/order');
+        $this->load->model('account/order');
+        $this->load->model('catalog/product');
+        $this->load->model('localisation/language');
+        $this->load->model('localisation/currency');
+        $this->load->model('localisation/order_status');
+
+        $order_info = $this->model_checkout_order->getOrder($order_id);
+        if ($order_info) {
+            $order_products = $this->model_account_order->getOrderProducts($order_id);
+
+            foreach ($order_products as $key => $product) {
+                $option_data = [];
+                $options     = $this->model_account_order->getOrderOptions($order_id, $product['order_product_id']);
+
+                if (!empty($options)) {
+                    foreach ($options as $option) {
+                        $option_data[] = [
+                            'product_option_id'       => $option['product_option_id'],
+                            'product_option_value_id' => $option['product_option_value_id'],
+                            'option_id'               => $option['option_id'] ?? '',
+                            'option_value_id'         => $option['option_value_id'] ?? '',
+                            'name'                    => $option['name'],
+                            'value'                   => $option['value'],
+                            'type'                    => $option['type'],
+                        ];
+                    }
+                }
+
+                $order_products[$key]['option'] = $option_data;
+                $order_products[$key]['total']  = $product['total'];
+            }
+
+            $order_totals = $this->model_account_order->getOrderTotals($order_id);
+            $order_vouchers = [];
+
+            $new_order_data = [
+                'invoice_prefix'        => $order_info['invoice_prefix'],
+                'store_id'              => $order_info['store_id'],
+                'store_name'            => $order_info['store_name'],
+                'store_url'             => $order_info['store_url'],
+                'customer_id'           => $order_info['customer_id'],
+                'customer_group_id'     => $order_info['customer_group_id'] ?? 0,
+                'firstname'             => $order_info['firstname'],
+                'lastname'              => $order_info['lastname'],
+                'email'                 => $order_info['email'],
+                'telephone'             => $order_info['telephone'],
+                'fax'                   => $order_info['fax'] ?? '',
+                'custom_field'          => $order_info['custom_field'],
+                'payment_firstname'     => $order_info['payment_firstname'],
+                'payment_lastname'      => $order_info['payment_lastname'],
+                'payment_company'       => $order_info['payment_company'],
+                'payment_address_1'     => $order_info['payment_address_1'],
+                'payment_address_2'     => $order_info['payment_address_2'],
+                'payment_city'          => $order_info['payment_city'],
+                'payment_postcode'      => $order_info['payment_postcode'],
+                'payment_country'       => $order_info['payment_country'],
+                'payment_country_id'    => $order_info['payment_country_id'],
+                'payment_zone'          => $order_info['payment_zone'],
+                'payment_zone_id'       => $order_info['payment_zone_id'],
+                'payment_address_format'=> $order_info['payment_address_format'],
+                'payment_custom_field'  => $order_info['payment_custom_field'],
+                'payment_method'        => $order_info['payment_method'],
+                'payment_code'          => $order_info['payment_code'],
+                'shipping_firstname'    => $order_info['shipping_firstname'],
+                'shipping_lastname'     => $order_info['shipping_lastname'],
+                'shipping_company'      => $order_info['shipping_company'],
+                'shipping_address_1'    => $order_info['shipping_address_1'],
+                'shipping_address_2'    => $order_info['shipping_address_2'],
+                'shipping_city'         => $order_info['shipping_city'],
+                'shipping_postcode'     => $order_info['shipping_postcode'],
+                'shipping_country'      => $order_info['shipping_country'],
+                'shipping_country_id'   => $order_info['shipping_country_id'],
+                'shipping_zone'         => $order_info['shipping_zone'],
+                'shipping_zone_id'      => $order_info['shipping_zone_id'],
+                'shipping_address_format'=> $order_info['shipping_address_format'],
+                'shipping_custom_field' => $order_info['shipping_custom_field'],
+                'shipping_method'       => $order_info['shipping_method'],
+                'shipping_code'         => $order_info['shipping_code'],
+                'products'              => $order_products,
+                'vouchers'              => $order_vouchers,
+                'totals'                => $order_totals,
+                'comment'               => $order_info['comment'],
+                'total'                 => $order_info['total'],
+                'affiliate_id'          => $order_info['affiliate_id'],
+                'commission'            => $order_info['commission'],
+                'marketing_id'          => $order_info['marketing_id'] ?? 0,
+                'tracking'              => $order_info['tracking'] ?? '',
+                'language_id'           => $order_info['language_id'],
+                'currency_id'           => $order_info['currency_id'],
+                'currency_code'         => $order_info['currency_code'],
+                'currency_value'        => $order_info['currency_value'],
+                'ip'                    => $order_info['ip'],
+                'forwarded_ip'          => $order_info['forwarded_ip'],
+                'user_agent'            => $order_info['user_agent'],
+                'accept_language'       => $order_info['accept_language'],
+            ];
+
+            $new_order_id = $this->model_checkout_order->addOrder($new_order_data);
+
+            // 處理發票資訊
+            $query_old_invoice = $this->db->query("SELECT * FROM " . DB_PREFIX . "invoice_info WHERE order_id = '" . (int) $order_id . "'");
+            $query_new_invoice = $this->db->query("SELECT * FROM " . DB_PREFIX . "invoice_info WHERE order_id = '" . (int) $new_order_id . "'");
+            if ($query_old_invoice->num_rows > 0 && $query_new_invoice->num_rows == 0) {
+                $order_invoice = $query_old_invoice->rows[0];
+
+                // 新訂單新增發票資訊
+                $this->db->query("INSERT INTO `" . DB_PREFIX . "invoice_info` (`order_id`, `love_code`, `company_write`, `invoice_type`, `carrier_type`, `carrier_num`, `createdate`) VALUES ('" . $new_order_id . "', '" . $this->db->escape($order_invoice['love_code']) . "', '" . $this->db->escape($order_invoice['company_write']) . "', '" . $this->db->escape($order_invoice['invoice_type']) . "', '" . $this->db->escape($order_invoice['carrier_type']) . "', '" . $this->db->escape($order_invoice['carrier_num']) . "', '" . time() . "' )");
+            }
+
+            // 新舊訂單歷程
+            $this->model_checkout_order->addOrderHistory($new_order_id, $order_info['order_status_id'], '定期定額付款第' . $info['TotalSuccessTimes'] . '次繳費成功，原始訂單編號: ' . $order_id, true, false);
+            $this->model_checkout_order->addOrderHistory($order_id, $order_info['order_status_id'], '定期定額付款第' . $info['TotalSuccessTimes'] . '次繳費成功，新訂單號: ' . $new_order_id, true, false);
+
+            return $new_order_id;
+        }
+
+        return false;
     }
 
     /*

@@ -13,6 +13,7 @@ $_['text_okmart']                       = 'OK超商取貨';
 $_['text_okmart_collection']            = 'OK超商取貨付款';
 $_['text_post']                         = '中華郵政';
 $_['text_tcat']                         = '黑貓宅配';
+$_['text_tcat_collection']              = '黑貓宅配取貨付款';
 $_['text_choice']                       = '選擇收件門市';
 $_['text_rechoice']                     = '重新選擇收件門市';
 $_['text_store_name']                   = '門市名稱：';

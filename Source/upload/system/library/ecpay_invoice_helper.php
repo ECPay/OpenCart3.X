@@ -6,12 +6,20 @@ use Ecpay\module_helper;
 
 class ecpay_invoice_helper extends module_helper
 {
+    private $module_name = 'ecpayinvoice';
+    protected $prefix = '';
+    protected $registry;
+    protected $config;
+
 	/**
      * EcpayInvoiceHelper constructor.
      */
-    public function __construct()
+    public function __construct($registry)
     {
         parent::__construct();
+        $this->prefix = 'payment_' . $this->module_name . '_';
+        $this->registry = $registry;
+        $this->config = $registry->get('config');
     }
 
     /**
@@ -21,61 +29,69 @@ class ecpay_invoice_helper extends module_helper
      * @param  string $merchant_id
      * @return array  $api_info
      */
-    public function get_ecpay_invoice_api_info($action = '', $merchant_id = '') {
+    public function get_ecpay_invoice_api_info($action = '', $test_mode = false) {
+
 		$api_info = [
 			'action' => '',
 		];
 
-        // API URL
-		if ($this->isTestMode($merchant_id)) {
-			switch ($action) {
-				case 'check_Love_code':
-					$api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/CheckLoveCode';
-					break;
-				case 'check_barcode':
-					$api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/CheckBarcode';
-					break;
-				case 'issue':
-					$api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/Issue';
-					break;
-				case 'delay_issue':
-					$api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/DelayIssue';
-					break;
-				case 'invalid':
-					$api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/Invalid';
-					break;
-				case 'cancel_delay_issue':
-					$api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/CancelDelayIssue';
-					break;
-				default:
-					break;
-			}
-		} else {
-			switch ($action) {
-				case 'check_Love_code':
-					$api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/CheckLoveCode';
-					break;
-				case 'check_barcode':
-					$api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/CheckBarcode';
-					break;
-				case 'issue':
-					$api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/Issue';
-					break;
-				case 'delay_issue':
-					$api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/DelayIssue';
-					break;
-				case 'invalid':
-					$api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/Invalid';
-					break;
-				case 'cancel_delay_issue':
-					$api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/CancelDelayIssue';
-					break;
-				default:
-					break;
-			}
-		}
+		if ($test_mode) {
+            $api_info['merchantId'] = '2000132';
+            $api_info['hashKey']    = 'ejCk326UnaZWKisg';
+            $api_info['hashIv']     = 'q9jcZX8Ib9LM8wYk';
 
-		return $api_info;
+            switch ($action) {
+                case 'check_Love_code':
+                    $api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/CheckLoveCode';
+                    break;
+                case 'check_barcode':
+                    $api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/CheckBarcode';
+                    break;
+                case 'issue':
+                    $api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/Issue';
+                    break;
+                case 'delay_issue':
+                    $api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/DelayIssue';
+                    break;
+                case 'invalid':
+                    $api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/Invalid';
+                    break;
+                case 'cancel_delay_issue':
+                    $api_info['action'] = 'https://einvoice-stage.ecpay.com.tw/B2CInvoice/CancelDelayIssue';
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            $api_info['merchantId'] = $this->config->get($this->prefix . 'mid');
+            $api_info['hashKey']    = $this->config->get($this->prefix . 'hashkey');
+            $api_info['hashIv']     = $this->config->get($this->prefix . 'hashiv');
+
+            switch ($action) {
+                case 'check_Love_code':
+                    $api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/CheckLoveCode';
+                    break;
+                case 'check_barcode':
+                    $api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/CheckBarcode';
+                    break;
+                case 'issue':
+                    $api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/Issue';
+                    break;
+                case 'delay_issue':
+                    $api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/DelayIssue';
+                    break;
+                case 'invalid':
+                    $api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/Invalid';
+                    break;
+                case 'cancel_delay_issue':
+                    $api_info['action'] = 'https://einvoice.ecpay.com.tw/B2CInvoice/CancelDelayIssue';
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return $api_info;
   	}
 
 	/**

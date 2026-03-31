@@ -23,7 +23,7 @@
             </tr>
              <tr class="donation_info"  style="display:none;" >
                 <td class="text-right" style="width:25%;"><strong>愛心碼</strong></td>
-                <td class="text-left" style="width:75%;"><input type="text" name="love_code" id="love_code" value="" placeholder="請輸入愛心碼3-7位數" class="form-control"><a href = "https://www.einvoice.nat.gov.tw/APMEMBERVAN/XcaOrgPreserveCodeQuery/XcaOrgPreserveCodeQuery" target="_blank">愛心碼查詢</a></td>
+                <td class="text-left" style="width:75%;"><input type="text" name="love_code" id="love_code" value="" placeholder="請輸入愛心碼3-7位數" class="form-control"><a href = "https://www.einvoice.nat.gov.tw/portal/btc/btc603w/search" target="_blank">愛心碼查詢</a></td>
             </tr>
 
             <tr class="carrier_type_zone"  style="display:none;" >
@@ -70,7 +70,7 @@
         $(".invoice_info").slideUp(0);
         $(".donation_info").slideUp(0);
         $(".carrier_type_zone").slideDown(0);
-        
+
         $("#carrier_type").val("");
         $("#carrier_num_2").val("");
         $("#carrier_num_3").val("");
@@ -81,7 +81,7 @@
     });
 
     $( "#carrier_type" ).on( "change", function() {
-        
+
         carrier_type = $("#carrier_type").val();
 
         if(carrier_type == 2){
@@ -141,7 +141,7 @@
 
     //記錄發票資訊
     function save_invoice_info() {
-        
+
         var invoice_type = $('input:radio[name="invoice_type"]:checked').val();
 
         var carrier_type    = $("#carrier_type").val()
@@ -151,11 +151,11 @@
         var love_code       = $("#love_code").val()
 
         if(carrier_type == 2){
-            carrier_num = carrier_num_2 
+            carrier_num = carrier_num_2
         } else if(carrier_type == 3){
             carrier_num = carrier_num_3
         } else {
-            carrier_num = "" 
+            carrier_num = ""
         }
 
         var postUrl = ''
@@ -187,11 +187,11 @@
     }
 
     function remove_invoice_info() {
-        
+
         var postUrl = ''
         var postUrlParent = 'index.php?route=extension/shipping/{{ module_name }}/';
         postUrl = postUrlParent + 'delInvoice';
-        
+
         var send = {invoice_status:'1'};
 
         //清除發票資訊
@@ -249,7 +249,7 @@
                     if(result == null)
                     {
                         return "手機條碼載具格式錯誤";
-                    }     
+                    }
                 }
 
                 console.log(invoice_type)
@@ -293,14 +293,14 @@
 </script>
 
 <script type="text/javascript">
-    
+
     function checkout()
     {
         // 檢查付款方式
         var ecpayPaymentRadio = $("#{{ id_prefix }}-choose-payment").val();
         if(ecpayPaymentRadio == '')
         {
-          alert("請選擇付款方式");  
+          alert("請選擇付款方式");
         }
 
         // 判斷電子發票是否輸入
@@ -316,11 +316,11 @@
         {% endif %}
 
         device = detectmob()
-        location.href='{{ redirect_url }}&device='+device;  
+        location.href='{{ redirect_url }}&device='+device;
     }
 
-    function detectmob() { 
-     
+    function detectmob() {
+
         if ( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
             return 1;
         }
@@ -328,5 +328,5 @@
             return 0;
         }
     }
-    
+
 </script>

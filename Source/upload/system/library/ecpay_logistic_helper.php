@@ -5,19 +5,21 @@ use Ecpay\module_helper;
 
 class ecpay_logistic_helper extends module_helper
 {
-	private $prefix = 'shipping_ecpaylogistic_';
+	private $prefix = 'shipping_';
+    private $module_name = 'ecpaylogistic';
+	private $setting_prefix = 'shipping_ecpaylogistic_';
+	protected $db;
 
     /**
      * EcpayPaymentHelper constructor.
      */
-    public function __construct()
-    {
+    public function __construct($registry) {
         parent::__construct();
-
+        $this->db = $registry->get('db');
     }
 
     public function get_logistics_type($shipping_sub_type) {
-        $shipping_type = 'CVS';
+        $shipping_type = '';
 
         switch ($shipping_sub_type) {
             case 'FAMIC2C':
@@ -30,9 +32,8 @@ class ecpay_logistic_helper extends module_helper
             case 'OKMART':
                 $shipping_type = 'CVS';
                 break;
-            case 'HOMETCAT':
-            case 'HOMEECAN':
-            case 'HOMEPOST':
+            case 'TCAT':
+            case 'POST':
                 $shipping_type = 'HOME';
                 break;
         }
@@ -74,7 +75,18 @@ class ecpay_logistic_helper extends module_helper
         ];
 
         // URL位置判斷
-        if ($ecpaylogisticSetting[$this->prefix . 'mid'] == '2000933' || $ecpaylogisticSetting[$this->prefix . 'mid'] == '2000132') {
+        if ($ecpaylogisticSetting[$this->setting_prefix . 'test_mode']) {
+            if ($ecpaylogisticSetting[$this->setting_prefix . 'type'] == 'B2C') {
+                $api_info['merchantId'] = '2000132';
+                $api_info['hashKey'] = '5294y06JbISpM5x9';
+                $api_info['hashIv'] = 'v77hoKGq4kWxNNIS';
+            }
+            else {
+                $api_info['merchantId'] = '2000933';
+                $api_info['hashKey'] = 'XBERn1YOvpM9nfZc';
+                $api_info['hashIv'] = 'h1ONHk4P4yqbl5LK';
+            }
+
             switch ($action) {
                 case 'map':
                     $api_info['action'] = 'https://logistics-stage.ecpay.com.tw/Express/map';
@@ -83,7 +95,7 @@ class ecpay_logistic_helper extends module_helper
                     $api_info['action'] = 'https://logistics-stage.ecpay.com.tw/Express/Create';
                     break;
                 case 'print':
-                    if ($ecpaylogisticSetting[$this->prefix . 'type'] == 'C2C') {
+                    if ($ecpaylogisticSetting[$this->setting_prefix . 'type'] == 'C2C') {
                         switch ($shipping_method) {
                             case 'UNIMARTC2C':
                                 $api_info['action'] = 'https://logistics-stage.ecpay.com.tw/Express/PrintUniMartC2COrderInfo';
@@ -106,7 +118,7 @@ class ecpay_logistic_helper extends module_helper
                                 break;
                         }
 
-                    } else if ($ecpaylogisticSetting[$this->prefix . 'type'] == 'B2C') {
+                    } else if ($ecpaylogisticSetting[$this->setting_prefix . 'type'] == 'B2C') {
                         switch ($shipping_method) {
                             case 'UNIMART':
                             case 'FAMI':
@@ -126,6 +138,10 @@ class ecpay_logistic_helper extends module_helper
             }
         }
         else {
+            $api_info['merchantId'] = $ecpaylogisticSetting[$this->setting_prefix . 'mid'];
+            $api_info['hashKey'] = $ecpaylogisticSetting[$this->setting_prefix . 'hashkey'];
+            $api_info['hashIv'] = $ecpaylogisticSetting[$this->setting_prefix . 'hashiv'];
+
             switch ($action) {
                 case 'map':
                     $api_info['action'] = 'https://logistics.ecpay.com.tw/Express/map';
@@ -134,20 +150,21 @@ class ecpay_logistic_helper extends module_helper
                     $api_info['action'] = 'https://logistics.ecpay.com.tw/Express/Create';
                     break;
                 case 'print':
-                    if ($ecpaylogisticSetting[$this->prefix . 'type'] == 'C2C') {
+                    if ($ecpaylogisticSetting[$this->setting_prefix . 'type'] == 'C2C') {
                         switch ($shipping_method) {
-                            case 'UNIMART':
+                            case 'UNIMARTC2C':
                                 $api_info['action'] = 'https://logistics.ecpay.com.tw/Express/PrintUniMartC2COrderInfo';
                                 break;
-                            case 'FAMI':
+                            case 'FAMIC2C':
                                 $api_info['action'] = 'https://logistics.ecpay.com.tw/Express/PrintFAMIC2COrderInfo';
                                 break;
-                            case 'HILIFE':
+                            case 'HILIFEC2C':
                                 $api_info['action'] = 'https://logistics.ecpay.com.tw/Express/PrintHILIFEC2COrderInfo';
                                 break;
                             case 'OKMARTC2C':
                                 $api_info['action'] = 'https://logistics.ecpay.com.tw/Express/PrintOKMARTC2COrderInfo';
                                 break;
+                            case 'TCAT':
                             case 'POST':
                                 $api_info['action'] = 'https://logistics.ecpay.com.tw/helper/printTradeDocument';
                                 break;
@@ -156,12 +173,13 @@ class ecpay_logistic_helper extends module_helper
                                 break;
                         }
                     }
-                    else if ($ecpaylogisticSetting[$this->prefix . 'type'] == 'B2C') {
+                    else if ($ecpaylogisticSetting[$this->setting_prefix . 'type'] == 'B2C') {
                         switch ($shipping_method) {
                             case 'UNIMART':
                             case 'FAMI':
                             case 'HILIFE':
                             case 'OKMART':
+                            case 'TCAT':
                             case 'POST':
                                 $api_info['action'] = 'https://logistics.ecpay.com.tw/helper/printTradeDocument';
                                 break;
@@ -199,10 +217,10 @@ class ecpay_logistic_helper extends module_helper
                 $weight_diff = 0.0283495231;
                 break;
         }
-        
+
         // 轉換重量為公斤制
         $weight = $weight * $weight_diff;
-        
+
         if ($weight <= 5) {
             return '1';
         } else if ($weight > 5 && $weight <= 10) {
@@ -234,6 +252,7 @@ class ecpay_logistic_helper extends module_helper
     {
         return [
             'tcat',
+            'tcat_collection',
             'post',
         ];
     }
@@ -300,4 +319,17 @@ class ecpay_logistic_helper extends module_helper
     {
         return in_array($shippingMethod, $this->get_ecpay_cvs_logistics());
     }
+
+    // 取得物流設定
+	public function get_logistic_settings() {
+		$ecpaylogisticSetting = array();
+		$sFieldName = 'code';
+		$sFieldValue = $this->prefix . $this->module_name;
+		$get_ecpaylogistic_setting_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE `" . $sFieldName . "` = '" . $sFieldValue . "'");
+		$ecpaylogisticSetting = array();
+		foreach($get_ecpaylogistic_setting_query->rows as $value) {
+			$ecpaylogisticSetting[$value['key']] = $value['value'];
+		}
+		return $ecpaylogisticSetting;
+	}
 }
