@@ -295,6 +295,9 @@ class ecpay_payment_helper extends module_helper
             case 'jkopay':
                 $sdkPayment = 'Jkopay';
                 break;
+            case 'ipassmoney':
+                $sdkPayment = 'iPASS';
+                break;
         }
 
         return $sdkPayment;

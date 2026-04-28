@@ -105,6 +105,11 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 unset($ecpay_payment_methods['Jkopay']);
             }
 
+            // 判斷是否可選綠界iPASS MONEY
+            if (0 > $cart_total || $cart_total > 50000) {
+                unset($ecpay_payment_methods['iPassMoney']);
+            }
+
             // 判斷是否可選定期定額
             $dca_period_type = $this->config->get($this->setting_prefix . 'dca_period_type');
             $dca_frequency   = $this->config->get($this->setting_prefix . 'dca_frequency');
@@ -305,8 +310,8 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
                 'NeedExtraPaidInfo' => 'Y',
             );
 
-            // 街口另外處理選擇付款方式
-            if ($sdkPayment == 'Jkopay') {
+            // 街口、綠界iPASS MONEY另外處理選擇付款方式
+            if ($sdkPayment == 'Jkopay' || $sdkPayment == 'iPASS') {
                 $input['ChoosePayment'] = 'DigitalPayment';
                 $input['ChooseSubPayment'] = $sdkPayment;
             }

@@ -27,6 +27,7 @@ $_['ecpaypayment_text_bnpl_zingala']    = 'ZINGALA';
 $_['ecpaypayment_text_applepay'] 		= 'ApplePay';
 $_['ecpaypayment_text_dca']             = 'DCA';
 $_['ecpaypayment_text_jkopay']          = 'Jkopay';
+$_['ecpaypayment_text_ipassmoney']      = 'iPass MONEY';
 
 // Entry
 $_['ecpaypayment_entry_status'] 		= 'Status';

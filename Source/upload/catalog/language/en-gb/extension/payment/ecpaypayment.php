@@ -21,6 +21,7 @@ $_['ecpaypayment_text_bnpl_zingala']    = 'ZINGALA';
 $_['ecpaypayment_text_applepay'] 		= 'ApplePay';
 $_['ecpaypayment_text_dca'] 		    = 'DCA';
 $_['ecpaypayment_text_jkopay'] 		    = 'Jkopay';
+$_['ecpaypayment_text_ipassmoney'] 	    = 'iPass MONEY';
 $_['ecpaypayment_text_item_name'] 		= 'A Package Of Online Goods';
 $_['ecpaypayment_text_payment_result_comment'] 	= 'ECPay %s Payment Result : (%s)%s';
 $_['ecpaypayment_text_atm_comment'] 		= 'Result : (%s)%s, Bank : %s, Virtual Account : %s, Deadline : %s';

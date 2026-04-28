@@ -136,6 +136,9 @@ https://www.opencart.com/index.php?route=marketplace/extension/info&extension_id
 Changelog
 -----------------
 
+3.0.2604140
+- 增加綠界iPASS MONEY付款方式
+
 3.0.2603040
 - 增加街口支付付款方式
 

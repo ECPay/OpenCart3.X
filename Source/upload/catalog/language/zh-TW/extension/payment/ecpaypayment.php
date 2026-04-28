@@ -21,6 +21,7 @@ $_['ecpaypayment_text_bnpl_zingala']           = '中租銀角零卡';
 $_['ecpaypayment_text_applepay'] 		       = 'ApplePay';
 $_['ecpaypayment_text_dca']      		       = '定期定額';
 $_['ecpaypayment_text_jkopay']                 = '街口支付';
+$_['ecpaypayment_text_ipassmoney']             = '綠界iPASS MONEY';
 $_['ecpaypayment_text_item_name']              = '網路商品一批';
 $_['ecpaypayment_text_payment_result_comment'] = '綠界%s付款結果：(%s)%s';
 $_['ecpaypayment_text_atm_comment']            = '取號結果：(%s)%s，銀行代碼：%s，虛擬帳號：%s, 付款截止日：%s';
@@ -31,7 +32,7 @@ $_['ecpaypayment_text_dca_comment']            = '定期定額資訊：(%s)%s，
 $_['ecpaypayment_text_failure_comment']        = '付款失敗, 錯誤訊息：%s';
 $_['ecpaypayment_text_state_error']            = '訂單狀態錯誤，不更新訂單狀態。';
 $_['ecpaypayment_text_simulate_paid']          = '模擬付款接收成功，請勿出貨。';
-$_['ecpayinvoice_text_title']		       = '綠界電子發票';
+$_['ecpayinvoice_text_title']		           = '綠界電子發票';
 // Entry
 $_['ecpaypayment_entry_payment_method']        = '付款方式:';
 

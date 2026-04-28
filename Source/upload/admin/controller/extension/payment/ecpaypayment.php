@@ -95,6 +95,7 @@ class ControllerExtensionPaymentEcpaypayment extends Controller {
             'text_applepay',
             'text_dca',
             'text_jkopay',
+            'text_ipassmoney',
 
             'entry_status',
             'entry_merchant_id',

@@ -27,6 +27,7 @@ $_['ecpaypayment_text_bnpl_zingala']     = '中租銀角零卡';
 $_['ecpaypayment_text_applepay'] 		 = 'ApplePay';
 $_['ecpaypayment_text_dca'] 		     = '定期定額';
 $_['ecpaypayment_text_jkopay']           = '街口支付';
+$_['ecpaypayment_text_ipassmoney']       = '綠界iPASS MONEY';
 
 // Entry
 $_['ecpaypayment_entry_status']          = '狀態';
